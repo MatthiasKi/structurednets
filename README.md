@@ -8,6 +8,8 @@ One approach to tackle this problem is to use structured matrices as weight matr
 
 In this repo, the focus is on two specific structure classes, namely Sequentially Semiseparable (SSS) Matrices and Products of Sparse Matrices. The algorithms used for finding these structures in trained weight matrices, as well as enforcing such structres during training are available in this repository. 
 
+The code in this repository has been used to run the experiments in our publication "Kissel and Diepold: Deep Convolutional Neural Networks with Sequentially Semiseparable Weight Matrices" accepted for presentation at the 30th European Symposium on Artificial Neural Networks (ESANN 2022). 
+
 ## Algorithms
 
 This repository contains several algorithms which facilitate the use of structured matrices in neural networks. These include
