@@ -12,13 +12,13 @@ class PSMApproximator(Approximator):
         self.nb_matrices = nb_matrices
         self.linear_nb_nonzero_elements_distribution = linear_nb_nonzero_elements_distribution
 
-    def approximate(self, optim_mat: np.ndarray, nb_params_share: float):
+    def approximate(self, optim_mat: np.ndarray, nb_params_share: float, num_interpolation_steps=17):
         self.nnz_share = nb_params_share
 
         optim_mat64 = optim_mat.astype("float64")
         nb_nonzero_elements = int(optim_mat64.size * self.nnz_share)
         best_approximation = None
-        for last_mat_param_share in np.linspace(0.1, 0.9, num=17):
+        for last_mat_param_share in np.linspace(0.1, 0.9, num=num_interpolation_steps):
             last_nb_nonzero_elements = int(last_mat_param_share * nb_nonzero_elements)
             res_dict = self.faust_approximation(weights=optim_mat64, last_nb_nonzero_elements=last_nb_nonzero_elements, total_nb_nonzero_elements=nb_nonzero_elements)
             
