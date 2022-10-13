@@ -160,8 +160,8 @@ class PSMApproximator(Approximator):
 if __name__ == "__main__":
     nnz_share = 0.5
     optim_mat = np.random.uniform(-1,1, size=(51,10))
-    approximator = PSMApproximator(nb_matrices=2, nnz_share=nnz_share, linear_nb_nonzero_elements_distribution=True)
-    res = approximator.approximate(optim_mat)
+    approximator = PSMApproximator(nb_matrices=2, linear_nb_nonzero_elements_distribution=True)
+    res = approximator.approximate(optim_mat, nb_params_share=0.5)
     approx_mat_dense = res["approx_mat_dense"]
     assert np.array_equal(approx_mat_dense.shape, np.array([51, 10])), "The approximated optim_mat has the wrong shape"
     assert np.sum([np.sum(sparse_factor != 0) for sparse_factor in res["faust_approximation"]]) <= int(nnz_share * optim_mat.size), " Too many non zero elements"
