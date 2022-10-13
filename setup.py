@@ -31,5 +31,6 @@ setuptools.setup(
     	"Pillow",
     	"scikit-learn",
     	"tvsclib @ git+https://github.com/MatthiasKi/tvsclib",
+	"matplotlib",
     ],
 )
