@@ -42,6 +42,19 @@ class BlockClusterTree:
     def get_all_leaf_ranges(self):
         return self.root.get_all_leaf_ranges()
 
+    def get_all_leaf_elements(self):
+        return self.root.get_all_leaf_elements()
+
+    def get_all_hmatrix_components(self):
+        return self.root.get_all_hmatrix_components()
+
+    def get_nb_params(self):
+        return self.root.get_nb_params()
+
+    def get_all_elements_where_parameters_can_be_added(self, max_nb_parameters: int):
+        parameters_left = max_nb_parameters - self.get_nb_params()
+        return self.root.get_all_elements_where_parameters_can_be_added(parameters_left=parameters_left)
+
     def plot(self):
         _, ax = plt.subplots()
         cmap = matplotlib.cm.get_cmap('Paired')

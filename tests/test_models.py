@@ -27,4 +27,4 @@ class ModelTests(TestCase):
 
             pretrained_output = net.predict_pretrained(sample_batch)
             featured_output = net.features_and_optim_mat_to_prediction(features, optim_mat)
-            self.assertTrue(torch.allclose(pretrained_output, featured_output, rtol=1e-4, atol=1e-7), "Mismatch between featured and standard output")
+            self.assertTrue(torch.allclose(pretrained_output, featured_output, rtol=1e-4, atol=1e-5), "Mismatch between featured and standard output")
