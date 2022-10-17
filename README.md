@@ -13,13 +13,13 @@ The code in this repository has been used to run the experiments in our publicat
 ## Algorithms
 
 This repository contains several algorithms which facilitate the use of structured matrices in neural networks. These include
-- Approximation of trained weight matrices with structured matrices (used for approximating pretrained pytorch vision models such as AlexNet, Resnet18 or Googlenet)
+- Approximation of trained weight matrices with structured matrices
 - Fine-tuning structured matrices to be used in pretrained pytorch vision models
-- Training structured matrices using the backpropagation algorithm
+- Training structured weight matrices using the backpropagation algorithm
 
 ## Usage
 
-The algorithms in this repository are tailored to pytorch vision models, which are used for image recognition on the Imagenet dataset. However, the algorithms should be applicable also to other models and datasets (which might required some modifications).
+In the following, we explain how to use this library. We use image recognition on the Imagenet dataset as use case in this repository. However, most algorithms are applicable also to other models and datasets.
 
 ### Installation
 
@@ -62,9 +62,7 @@ The sss_model_training.py script shows how a neural network which contains an SS
 
 ### Approximation Algorithms
 
-We provide 2 approximation methods:
-- approximators/psm_approximator.py defines an approximator which approximates a given weight matrix by a product of sparse matrices (with defined number of nonzero elements). This class uses the PALM algorithm provided by the pyFaust package. 
-- approximators/sss_approximator.py defines an approximator which performs balanced model reduction for a given weight matrix (with defined number of parameters). This class uses the tvsclib package. 
+We provide several methods for approximating given matrices with structured matrices. These include sequentially semiseparable matrices, matrices with low displacment rank, low rank matrices, products of sparse matrices and hierarchical matrices. Please find more details in the [README.md file of the approximators folder](https://github.com/MatthiasKi/structurednets/tree/master/src/structurednets/approximators/README.md).
 
 The script approximate_optim_matrix.py shows how to use these approximators to approximate the last layer of a pretrained pytorch vision model. 
 
