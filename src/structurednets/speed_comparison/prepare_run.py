@@ -5,7 +5,7 @@ import pickle
 
 from structurednets.models.alexnet import AlexNet
 from structurednets.asset_helpers import get_animal_classes_filepath
-from structurednets.extract_features import get_required_indices
+from structurednets.features.extract_features import get_required_indices
 
 def print_mat_list_to_file(mats: list, name: str, outfile_path: str):
     for k, mat in enumerate(mats):

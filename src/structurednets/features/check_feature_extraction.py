@@ -3,7 +3,7 @@ import numpy as np
 import torch
 
 from structurednets.asset_helpers import get_animal_classes_filepath, get_object_classes_filepath, load_features
-from structurednets.extract_features import get_required_indices
+from structurednets.features.extract_features import get_required_indices
 from structurednets.models.visionmodel import VisionModel
 from structurednets.models.alexnet import AlexNet
 from structurednets.models.googlenet import GoogleNet

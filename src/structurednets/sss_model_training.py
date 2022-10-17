@@ -12,7 +12,7 @@ from structurednets.models.mobilenetv2 import MobilenetV2
 from structurednets.models.resnet18 import Resnet18
 from structurednets.models.vgg16 import VGG16
 from structurednets.models.visionmodel import VisionModel
-from structurednets.extract_features import get_required_indices, get_features_output_filename
+from structurednets.features.extract_features import get_required_indices, get_features_output_filename
 from structurednets.training_helpers import train
 from structurednets.layers.semiseparablelayer import SemiseparableLayer
 

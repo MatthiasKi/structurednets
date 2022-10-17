@@ -12,6 +12,8 @@ def get_error(approx_mat_dense: np.ndarray, optim_mat: np.ndarray):
     return np.linalg.norm(approx_mat_dense - optim_mat, ord="fro")
 
 if __name__ == "__main__":
+    # NOTE: This is the script used for running the benchmark in the "HODLR Approximation with upper bounded number of parameters" paper
+
     # Hyperparameters
     output_indices = np.arange(1000) # This means all Imagenet classes
     model_classes = [GoogleNet, MobilenetV2, InceptionV3]

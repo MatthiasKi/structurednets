@@ -4,7 +4,7 @@ import torch
 
 from structurednets.training_helpers import get_accuracy, get_full_batch, get_train_data
 from structurednets.logging_helpers import write_header_to_file, log_to_file
-from structurednets.extract_features import get_required_indices
+from structurednets.features.extract_features import get_required_indices
 from structurednets.asset_helpers import get_animal_classes_filepath, load_features, get_label_name_from_path
 from structurednets.models.visionmodel import VisionModel
 from structurednets.models.alexnet import AlexNet
@@ -16,7 +16,7 @@ from structurednets.models.vgg16 import VGG16
 from structurednets.approximators.psm_approximator import PSMApproximator
 from structurednets.approximators.sss_approximator import SSSApproximator
 
-def approximate_optim_matrix(model_class: VisionModel, features_filepath: str, output_folderpath: str, label_filepath: str):
+def benchmark_approximate_weight_matrix(model_class: VisionModel, features_filepath: str, output_folderpath: str, label_filepath: str):
     label_tag = get_label_name_from_path(label_filepath)
     required_indices = get_required_indices(path_to_label_file=label_filepath)
     model = model_class(output_indices=required_indices, use_gpu=False)
@@ -34,10 +34,10 @@ def approximate_optim_matrix(model_class: VisionModel, features_filepath: str, o
         PSMApproximator(nb_matrices=3, linear_nb_nonzero_elements_distribution=True),
         PSMApproximator(nb_matrices=2, linear_nb_nonzero_elements_distribution=False),
         PSMApproximator(nb_matrices=3, linear_nb_nonzero_elements_distribution=False),
-        #SSSApproximator(nb_states=50),
-        #SSSApproximator(nb_states=100),
-        #SSSApproximator(nb_states=200),
-        #SSSApproximator(nb_states=300),
+        SSSApproximator(nb_states=50),
+        SSSApproximator(nb_states=100),
+        SSSApproximator(nb_states=200),
+        SSSApproximator(nb_states=300),
     ]
 
     nb_param_shares = [0.01, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3]
@@ -78,7 +78,7 @@ if __name__ == "__main__":
     output_folderpath = "/path/to/approximated_models/"
     label_filepath = get_animal_classes_filepath()
 
-    approximate_optim_matrix(
+    benchmark_approximate_weight_matrix(
         model_class=model_class,
         features_filepath=features_filepath,
         output_folderpath=output_folderpath,

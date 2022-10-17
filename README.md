@@ -50,9 +50,11 @@ where indices denotes the indices of the classes used (we selected subgroups of 
 
 These model wrappers provide functions to get the weight matrix to be optimized (get_optimization_matrix) or get the feature outputs of the model (get_features_for_batch), i.e. the outputs of the model without the last fully connected layer, which we aim to substitute with a layer containing a structured weight matrix. 
 
-### Extracting Features
+### Extracting "Features"
 
-Since we only want to change the last (densely connected) layer of the deep pretrained pytorch models, we can freeze the first layers of the model and don't need to compute them over and over again during the training. In fact, we only need to compute the activations of the network at hand once, up to the layer which we want to modify. We call the inputs to the layer we want to modify "features". In order to compute these features, the last (densely connected) layer is removed from the network and the activations are stored into a file. The extraction can be done using the extract_features() function in structurednets.extract_features. The feature extraction can afterwards be checked using the check_features() function in structurednets.check_feature_extraction. 
+The application example used in our scripts is image recognition based on the Imagenet dataset. Since this dataset is very large (it contains more than a million images, with 1000 classes in total), it is often not feasible to train a whole model again and again to compare the effect of using different matrix structures in the model. Howeve, we only focus on the last, densely connect layer of the deep pretrained models (which most often contains most of the parameters of the overall network, since parameters in the convolutional parts are shared). Therefore, we can freeze the first layers of the model and don't need to compute them over and over again during the training. 
+
+In fact, we only need to compute the activations of the network once, up to the layer which we want to modify. We call the inputs to the layer we want to modify "features". In order to compute these features, the last (densely connected) layer is removed from the network and the activations are stored into a file. The extraction can be done using the extract_features() function in structurednets.features.extract_features. The feature extraction can afterwards be checked using the check_features() function in structurednets.features.check_feature_extraction. More details can be found in the [README.md](https://github.com/MatthiasKi/structurednets/tree/master/src/structurednets/features/README.md) file in the features folder.
 
 Multiplying the features with the weight matrix of the last layer (which we call "optimization matrix") plus adding the biases of this last layer should yield the same output as propagating information through the whole network. This identity is checked in one of the unit tests (see "test_models.py").
 
@@ -62,7 +64,7 @@ The sss_model_training.py script shows how a neural network which contains an SS
 
 ### Approximation Algorithms
 
-We provide several methods for approximating given matrices with structured matrices. These include sequentially semiseparable matrices, matrices with low displacment rank, low rank matrices, products of sparse matrices and hierarchical matrices. Please find more details in the [README.md file of the approximators folder](https://github.com/MatthiasKi/structurednets/tree/master/src/structurednets/approximators/README.md).
+We provide several methods for approximating given matrices with structured matrices. These include sequentially semiseparable matrices, matrices with low displacment rank, low rank matrices, products of sparse matrices and hierarchical matrices. Please find more details in the [README.md](https://github.com/MatthiasKi/structurednets/tree/master/src/structurednets/approximators/README.md) file in the approximators folder.
 
 The script approximate_optim_matrix.py shows how to use these approximators to approximate the last layer of a pretrained pytorch vision model. 
 

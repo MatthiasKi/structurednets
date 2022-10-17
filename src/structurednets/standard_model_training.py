@@ -7,7 +7,7 @@ from structurednets.logging_helpers import write_header_to_file
 from structurednets.asset_helpers import get_animal_classes_filepath
 from structurednets.models.visionmodel import VisionModel
 from structurednets.models.alexnet import AlexNet
-from structurednets.extract_features import get_required_indices
+from structurednets.features.extract_features import get_required_indices
 from structurednets.training_helpers import train
 
 def train_standard_model(features_filepath: str, path_to_labelfile: str, model_class: VisionModel, patience: int, batch_sizes: list, verbose_train_progress: bool, lrs: list, train_from_scratch: bool, use_softmaxes: list, output_foldername: str):

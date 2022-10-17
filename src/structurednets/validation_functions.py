@@ -7,7 +7,7 @@ from structurednets.asset_helpers import get_validation_metadata_filepath, get_v
 from structurednets.training_helpers import get_accuracy
 from structurednets.layers.psmlayer import PSMLayer
 from structurednets.models.model_helpers import visionmodel_name_to_class
-from structurednets.extract_features import get_required_indices
+from structurednets.features.extract_features import get_required_indices
 
 def compute_original_model_accuracies(res_csv_path: str, features_folderpath: str):
     with open(res_csv_path, "w") as csv_file:
