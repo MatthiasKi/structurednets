@@ -12,7 +12,16 @@ class SSSApproximator(Approximator):
         self.nb_states = nb_states
 
     def approximate(self, optim_mat: np.ndarray, nb_params_share: float):
+        res_dict = dict()
+        res_dict["type"] = "SSSApproximator"
+
         self.state_space_dim = get_max_statespace_dim(optim_mat=optim_mat, nb_params_share=nb_params_share, nb_states=self.nb_states)
+        if self.state_space_dim <= 0:
+            res_dict["system_approx"] = None
+            res_dict["approx_mat_dense"] = np.zeros_like(optim_mat)
+            res_dict["state_space_dim"] = 0
+            res_dict["nb_states"] = 0
+            return res_dict
 
         dims_in, dims_out = standard_dims_in_dims_out_computation(input_size=optim_mat.shape[1], output_size=optim_mat.shape[0], nb_states=self.nb_states)
         T_operator = ToeplitzOperator(optim_mat, dims_in, dims_out)
@@ -20,8 +29,6 @@ class SSSApproximator(Approximator):
         system_approx = MixedSystem(S)
         approx_mat_dense = system_approx.to_matrix()
 
-        res_dict = dict()
-        res_dict["type"] = "SSSApproximator"
         res_dict["system_approx"] = system_approx
         res_dict["approx_mat_dense"] = approx_mat_dense
         res_dict["state_space_dim"] = self.state_space_dim
