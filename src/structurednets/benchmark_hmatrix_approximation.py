@@ -17,7 +17,7 @@ if __name__ == "__main__":
     # Hyperparameters
     output_indices = np.arange(1000) # This means all Imagenet classes
     model_classes = [GoogleNet, MobilenetV2, InceptionV3]
-    param_shares = np.logspace(0.01, 0.9, num=10)
+    param_shares = np.linspace(0.01, 0.8, num=10)
     output_path = "hmatrix_benchmark.p"
     # ---
 
