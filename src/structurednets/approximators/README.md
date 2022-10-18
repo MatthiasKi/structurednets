@@ -12,7 +12,7 @@ In this folder, you can find approximators for the following classes of structur
 - Sequentially Semiseparable Matrices: SSSApproximator
 - Low Rank Matrices: LRApproximator
 - Matrices of Low Displacement Rank (in particular: LDR matrices with tridiagonal plus corder operator matrices): LDRApproximator
-- Hierarchical Matrices (in particular: HODLR Matrices): HODLRApproximator
+- Hierarchical Matrices (in particular: HODLR and HEDLR Matrices): HODLRApproximator (Hierarchically off diagonal low rank structure) and HEDLRApproximator (Hierarchically equally distributed low rank structure)
 - Products of Sparse Matrices: PSMApproximator
 
 ## Usage

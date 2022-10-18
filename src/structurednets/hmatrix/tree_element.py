@@ -105,13 +105,16 @@ class TreeElement:
         else:
             return all([child.recursive_check_if_children_span_all_indices() for child in self.children])
 
-    def split_hodlr_style(self, matrix_shape: tuple, min_block_size=2):
+    def split_hodlr_style(self, matrix_shape: tuple, min_block_size=2, check_if_on_diagonal=True):
         assert min_block_size > 1, "The minimum block size must be greater than 1"
 
         if self.is_leaf():
             if len(self.row_range) > 2 * min_block_size \
                 and len(self.col_range) > 2 * min_block_size \
-                and self.is_on_diagonal(matrix_shape=matrix_shape):
+                and (
+                    not check_if_on_diagonal
+                    or self.is_on_diagonal(matrix_shape=matrix_shape)
+                ):
 
                 row_range_mid_point = int((self.row_range.stop + self.row_range.start) / 2)
                 col_range_mid_point = int((self.col_range.stop + self.col_range.start) / 2)
@@ -124,7 +127,7 @@ class TreeElement:
                 ]
         else:
             for child in self.children:
-                child.split_hodlr_style(matrix_shape=matrix_shape, min_block_size=min_block_size)
+                child.split_hodlr_style(matrix_shape=matrix_shape, min_block_size=min_block_size, check_if_on_diagonal=check_if_on_diagonal)
 
     def get_max_nb_of_children(self):
         if self.children is None:

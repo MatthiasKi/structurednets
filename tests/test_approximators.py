@@ -6,6 +6,7 @@ from structurednets.approximators.psm_approximator_wrapper import PSMApproximato
 from structurednets.approximators.sss_approximator import SSSApproximator
 from structurednets.approximators.ldr_approximator import LDRApproximator
 from structurednets.approximators.hodlr_approximator import HODLRApproximator
+from structurednets.approximators.hedlr_approximator import HEDLRApproximator
 from structurednets.approximators.lr_approximator import LRApproximator
 from structurednets.approximators.sss_approximator_wrapper import SSSApproximatorWrapper
 
@@ -89,3 +90,22 @@ class LayerTests(TestCase):
         res = approximator_2.approximate(optim_mat, nb_params_share=0.2)
         approx_mat_dense = res["approx_mat_dense"]
         self.assertTrue(np.allclose(optim_mat, approx_mat_dense), "The HODLR approximation algorithm should be able to fully recover a HODLR matrix")
+
+    def test_hedlr_approximator(self):
+        nnz_share = 0.2
+        optim_mat = np.random.uniform(-1,1, size=(51,10))
+        approximator = HEDLRApproximator()
+        res = approximator.approximate(optim_mat, nb_params_share=nnz_share)
+        approx_mat_dense = res["approx_mat_dense"]
+        self.assertTrue(np.array_equal(approx_mat_dense.shape, np.array([51, 10])), "The approximated optim_mat has the wrong shape")
+
+    def test_hedlr_with_hodlr_matrix(self):
+        rand_mat = np.random.uniform(-1,1, size=(47,34))
+        approximator_1 = HEDLRApproximator()
+        res = approximator_1.approximate(rand_mat, nb_params_share=0.2)
+        optim_mat = res["approx_mat_dense"]
+
+        approximator_2 = HEDLRApproximator()
+        res = approximator_2.approximate(optim_mat, nb_params_share=0.2)
+        approx_mat_dense = res["approx_mat_dense"]
+        self.assertTrue(np.allclose(optim_mat, approx_mat_dense), "The HEDLR approximation algorithm should be able to fully recover a HEDLR matrix")

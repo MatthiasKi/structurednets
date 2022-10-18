@@ -5,6 +5,7 @@ from structurednets.models.googlenet import GoogleNet
 from structurednets.models.mobilenetv2 import MobilenetV2
 from structurednets.models.inceptionv3 import InceptionV3
 from structurednets.approximators.hodlr_approximator import HODLRApproximator
+from structurednets.approximators.hedlr_approximator import HEDLRApproximator
 from structurednets.approximators.sss_approximator_wrapper import SSSApproximatorWrapper
 from structurednets.approximators.lr_approximator import LRApproximator
 
@@ -23,6 +24,7 @@ if __name__ == "__main__":
 
     approximators = [
         HODLRApproximator(),
+        HEDLRApproximator(),
         SSSApproximatorWrapper(),
         LRApproximator()
     ]
