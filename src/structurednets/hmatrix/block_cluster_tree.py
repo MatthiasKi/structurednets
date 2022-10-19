@@ -39,9 +39,6 @@ class BlockClusterTree:
     def get_max_nb_of_children(self):
         return self.root.get_max_nb_of_children()
 
-    def is_binary(self):
-        return self.get_max_nb_of_children() == 2
-
     def get_all_leaf_ranges(self):
         return self.root.get_all_leaf_ranges()
 
