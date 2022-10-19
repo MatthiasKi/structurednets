@@ -5,7 +5,7 @@ import numpy as np
 
 from structurednets.asset_helpers import get_validation_metadata_filepath, get_validation_classes_filepath, get_animal_classes_filepath, assemble_features_output_filename, load_features
 from structurednets.training_helpers import get_accuracy
-from structurednets.layers.psmlayer import PSMLayer
+from structurednets.layers.psmlayer import build_PSMLayer_from_res_dict
 from structurednets.models.model_helpers import visionmodel_name_to_class
 from structurednets.features.extract_features import get_required_indices
 
@@ -39,14 +39,14 @@ def compute_psm_layer_accuracy(resdict_path: str, features_filepath: str, psm_la
     X, y, _ = load_features(path_to_feature_file=features_filepath)
     y_t = torch.tensor(y)
     res_dict = pickle.load(open(resdict_path, "rb"))
-    model = PSMLayer(res_dict, psm_layer_bias)
+    model = build_PSMLayer_from_res_dict(res_dict=res_dict, bias=psm_layer_bias)
     X_t = torch.tensor(X)
     pred = model(X_t)
     return get_accuracy(y_t, pred)
 
 def check_psm_layer_parameter_count(resdict_path: str, psm_layer_bias: np.ndarray, param_share: float) -> bool:
     res_dict = pickle.load(open(resdict_path, "rb"))
-    model = PSMLayer(res_dict, psm_layer_bias)
+    model = build_PSMLayer_from_res_dict(res_dict=res_dict, bias=psm_layer_bias)
     return model.get_nb_parameters_in_weight_matrix() <= int(res_dict["approx_mat_dense"].size * param_share)
 
 def get_psmapproximator_param_share_filenames(filenames: list, param_share: float) -> list:
