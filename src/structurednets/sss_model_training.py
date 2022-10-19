@@ -14,7 +14,7 @@ from structurednets.models.vgg16 import VGG16
 from structurednets.models.visionmodel import VisionModel
 from structurednets.features.extract_features import get_required_indices, get_features_output_filename
 from structurednets.training_helpers import train
-from structurednets.layers.semiseparablelayer import SemiseparableLayer
+from structurednets.layers.sss_layer import SemiseparableLayer
 
 def train_sss_model(
     features_basepath: str, 

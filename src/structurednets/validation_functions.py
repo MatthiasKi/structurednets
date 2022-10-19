@@ -5,7 +5,7 @@ import numpy as np
 
 from structurednets.asset_helpers import get_validation_metadata_filepath, get_validation_classes_filepath, get_animal_classes_filepath, assemble_features_output_filename, load_features
 from structurednets.training_helpers import get_accuracy
-from structurednets.layers.psmlayer import build_PSMLayer_from_res_dict
+from structurednets.layers.psm_layer import build_PSMLayer_from_res_dict
 from structurednets.models.model_helpers import visionmodel_name_to_class
 from structurednets.features.extract_features import get_required_indices
 

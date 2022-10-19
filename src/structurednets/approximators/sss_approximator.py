@@ -4,7 +4,7 @@ from tvsclib.mixed_system import MixedSystem
 from tvsclib.toeplitz_operator import ToeplitzOperator
 from tvsclib.system_identification_svd import SystemIdentificationSVD
 
-from structurednets.layers.semiseparablelayer import standard_dims_in_dims_out_computation, get_max_statespace_dim
+from structurednets.layers.sss_layer import standard_dims_in_dims_out_computation, get_max_statespace_dim
 from structurednets.approximators.approximator import Approximator
 
 class SSSApproximator(Approximator):
