@@ -13,7 +13,7 @@ class HMatrix:
         res = torch.zeros(self.shape)
         components = self.block_cluster_tree.get_all_hmatrix_components()
         for component in components:
-            res[component.row_range, :][:, component.col_range] = component.to_dense()
+            res[component.row_range.start:component.row_range.stop, component.col_range.start:component.col_range.stop] = component.to_dense()
 
         return res
 
@@ -51,7 +51,7 @@ class HMatrix:
             else:
                 best_element_to_add_parameters.add_singular_value_to_approximation()
 
-            elements_where_parameters_can_be_added = self.block_cluster_tree.get_all_elements_where_parameters_can_be_added()
+            elements_where_parameters_can_be_added = self.block_cluster_tree.get_all_elements_where_parameters_can_be_added(max_nb_parameters=max_nb_parameters)
 
     def dot(self, vec: torch.tensor) -> torch.tensor:
         assert hasattr(self, "shape"), "The approximation must be performed before calling dot()"
