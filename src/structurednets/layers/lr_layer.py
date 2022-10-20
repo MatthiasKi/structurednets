@@ -17,8 +17,6 @@ class LRLayer(nn.Module):
         max_nb_parameters = int(nb_params_share * input_dim * output_dim)
         rank = int(max_nb_parameters / (input_dim + output_dim))
 
-        # TODO these should be nn parameters
-
         if initial_weight_matrix is not None:
             assert isinstance(initial_weight_matrix, np.ndarray), "The initial weight matrix must be passed as np.ndarray"
             assert len(initial_weight_matrix.shape) == 2, "The initial weight matrix should have 2 dimensions"
@@ -32,8 +30,8 @@ class LRLayer(nn.Module):
             self.left_lr = torch.tensor(get_random_glorot_uniform_matrix(output_dim, rank))
             self.right_lr = torch.tensor(get_random_glorot_uniform_matrix(rank, input_dim))
 
-        self.left_lr = self.left_lr.float()
-        self.right_lr = self.right_lr.float()
+        self.left_lr = nn.Parameter(self.left_lr.float())
+        self.right_lr = nn.Parameter(self.right_lr.float())
 
         self.use_bias = use_bias
         if use_bias:
@@ -45,7 +43,7 @@ class LRLayer(nn.Module):
             else:
                 self.bias = torch.tensor(get_random_glorot_uniform_matrix((output_dim,)))
 
-            self.bias = self.bias.float()
+            self.bias = nn.Parameter(self.bias.float())
         else:
             self.bias = None
         
