@@ -89,7 +89,7 @@ class ApproximatorTests(TestCase):
         approximator_2 = HODLRApproximator()
         res = approximator_2.approximate(optim_mat, nb_params_share=0.2)
         approx_mat_dense = res["approx_mat_dense"]
-        self.assertTrue(np.allclose(optim_mat, approx_mat_dense), "The HODLR approximation algorithm should be able to fully recover a HODLR matrix")
+        self.assertTrue(np.allclose(optim_mat, approx_mat_dense, rtol=1e-5, atol=1e-5), "The HODLR approximation algorithm should be able to fully recover a HODLR matrix")
 
     def test_hedlr_approximator(self):
         nnz_share = 0.2
@@ -108,4 +108,4 @@ class ApproximatorTests(TestCase):
         approximator_2 = HEDLRApproximator()
         res = approximator_2.approximate(optim_mat, nb_params_share=0.2)
         approx_mat_dense = res["approx_mat_dense"]
-        self.assertTrue(np.allclose(optim_mat, approx_mat_dense), "The HEDLR approximation algorithm should be able to fully recover a HEDLR matrix")
+        self.assertTrue(np.allclose(optim_mat, approx_mat_dense, rtol=1e-5, atol=1e-5), "The HEDLR approximation algorithm should be able to fully recover a HEDLR matrix")
