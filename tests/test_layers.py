@@ -23,10 +23,10 @@ class LayerTests(TestCase):
 
         random_input = np.random.uniform(-1,1,size=(nb_samples, nb_inputs))
 
-        layer = SemiseparableLayer(input_size=nb_inputs, output_size=nb_outputs, nb_params_share=nb_params_share, nb_states=nb_states)
+        layer = SemiseparableLayer(input_dim=nb_inputs, output_dim=nb_outputs, nb_params_share=nb_params_share, nb_states=nb_states)
         layer_output = layer(torch.tensor(random_input).float()).detach().numpy()
 
-        T = layer.initial_T
+        T = layer.initial_weight_matrix
         system_output = random_input @ T.T + layer.bias.detach().numpy()
 
         self.assertTrue(np.allclose(layer_output, system_output, atol=1e-5), "The layer output does not match the system output")

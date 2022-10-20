@@ -26,32 +26,33 @@ def get_max_statespace_dim(optim_mat: np.ndarray, nb_params_share: float, nb_sta
     return state_space_dim
     
 class SemiseparableLayer(nn.Module):
-    def __init__(self, input_size, output_size,  nb_params_share: float, nb_states=1, initial_T=None, initial_bias=None):
+    def __init__(self, input_dim: int, output_dim: int, nb_params_share: float, use_bias=True, initial_weight_matrix=None, initial_bias=None, nb_states=1):
         super(SemiseparableLayer, self).__init__()
 
-        self.input_size = input_size
-        self.output_size = output_size
+        self.input_dim = input_dim
+        self.output_dim = output_dim
         self.nb_states = nb_states
+        self.use_bias = use_bias
 
         assert self.nb_states > 0, "Nb states must be positive"
-        assert self.input_size > 0, "Input size must be positive"
-        assert self.output_size > 0, "Output size must be positive"
+        assert self.input_dim > 0, "Input dim must be positive"
+        assert self.output_dim > 0, "Output dim must be positive"
 
-        self.init_state_matrices(nb_params_share=nb_params_share, initial_T=initial_T, initial_bias=initial_bias)
+        self.init_state_matrices(nb_params_share=nb_params_share, initial_weight_matrix=initial_weight_matrix, initial_bias=initial_bias)
 
-    def init_state_matrices(self, nb_params_share: float, initial_T=None, initial_bias=None):
-        if initial_T is None:
-            T_full = get_random_glorot_uniform_matrix(shape=(self.output_size, self.input_size))
+    def init_state_matrices(self, nb_params_share: float, initial_weight_matrix=None, initial_bias=None):
+        if initial_weight_matrix is None:
+            T_full = get_random_glorot_uniform_matrix(shape=(self.output_dim, self.input_dim))
         else:
-            T_full = initial_T
+            T_full = initial_weight_matrix
 
         self.statespace_dim = get_max_statespace_dim(T_full, nb_params_share=nb_params_share, nb_states=self.nb_states)
 
-        self.dims_in, self.dims_out = standard_dims_in_dims_out_computation(input_size=self.input_size, output_size=self.output_size, nb_states=self.nb_states)
+        self.dims_in, self.dims_out = standard_dims_in_dims_out_computation(input_size=self.input_dim, output_size=self.output_dim, nb_states=self.nb_states)
         T_operator = ToeplitzOperator(T_full, self.dims_in, self.dims_out)
         S = SystemIdentificationSVD(toeplitz=T_operator, max_states_local=self.statespace_dim)
         system_approx = MixedSystem(S)
-        self.initial_T = system_approx.to_matrix()
+        self.initial_weight_matrix = system_approx.to_matrix()
 
         A = [stage.A_matrix for stage in system_approx.causal_system.stages]
         B = [stage.B_matrix for stage in system_approx.causal_system.stages]
@@ -70,10 +71,13 @@ class SemiseparableLayer(nn.Module):
         self.F = nn.ParameterList([nn.Parameter(torch.tensor(F_k).float(), requires_grad=True) for F_k in F])
         self.G = nn.ParameterList([nn.Parameter(torch.tensor(G_k).float(), requires_grad=True) for G_k in G])
 
-        if initial_bias is None:
-            self.bias = nn.parameter.Parameter(torch.tensor(get_random_glorot_uniform_matrix((self.output_size,))).float(), requires_grad=True)
+        if self.use_bias:
+            if initial_bias is None:
+                self.bias = nn.parameter.Parameter(torch.tensor(get_random_glorot_uniform_matrix((self.output_dim,))).float(), requires_grad=True)
+            else:
+                self.bias = nn.parameter.Parameter(torch.tensor(initial_bias), requires_grad=True)
         else:
-            self.bias = nn.parameter.Parameter(torch.tensor(initial_bias), requires_grad=True)
+            self.bias = None
 
     def get_input_index_range_according_to_state(self, state_i):
         return range(np.sum(self.dims_in[:state_i]), np.sum(self.dims_in[:state_i+1]))
@@ -85,7 +89,7 @@ class SemiseparableLayer(nn.Module):
         causal_state = torch.zeros((0, U.shape[0]))
         anticausal_state = torch.zeros((0, U.shape[0]))
 
-        y_pred = torch.zeros((self.output_size, U.shape[0]))
+        y_pred = torch.zeros((self.output_dim, U.shape[0]))
         for causal_state_i in range(self.nb_states):
             causal_state_input_index_range = self.get_input_index_range_according_to_state(causal_state_i)
             causal_state_output_index_range = self.get_output_index_range_according_to_state(causal_state_i)
@@ -101,7 +105,8 @@ class SemiseparableLayer(nn.Module):
             anticausal_state = torch.matmul(self.E[anticausal_state_i], anticausal_state) + torch.matmul(self.F[anticausal_state_i], u_anticausal)
 
         y_pred = torch.transpose(y_pred, 1, 0)
-        y_pred += self.bias
+        if self.use_bias:
+            y_pred += self.bias
         return y_pred
 
 def standard_dims_in_dims_out_computation(input_size: int, output_size: int, nb_states: int):

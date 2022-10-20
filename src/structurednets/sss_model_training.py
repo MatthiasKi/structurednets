@@ -66,7 +66,7 @@ def train_sss_model(
                                         else:
                                             initial_T = start_weight_mat.cpu().detach().numpy().T
                                             initial_bias = start_bias
-                                        model = SemiseparableLayer(input_size=input_size, output_size=output_size, nb_params_share=nb_param_share, nb_states=nb_states, initial_T=initial_T, initial_bias=initial_bias)
+                                        model = SemiseparableLayer(input_dim=input_size, output_dim=output_size, nb_params_share=nb_param_share, nb_states=nb_states, initial_weight_matrix=initial_T, initial_bias=initial_bias)
 
                                         if use_softmax:
                                             model = torch.nn.Sequential(model, torch.nn.Softmax())
