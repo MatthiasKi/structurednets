@@ -6,6 +6,8 @@ from tvsclib.mixed_system import MixedSystem
 from tvsclib.toeplitz_operator import ToeplitzOperator
 from tvsclib.system_identification_svd import SystemIdentificationSVD
 
+from structurednets.layers.layer_helpers import get_random_glorot_uniform_matrix
+
 def get_nb_parameters(optim_mat: np.ndarray, statespace_dim: int, nb_states: int):
     dims_in, dims_out = standard_dims_in_dims_out_computation(input_size=optim_mat.shape[1], output_size=optim_mat.shape[0], nb_states=nb_states)
     nb_params = 0
@@ -101,10 +103,6 @@ class SemiseparableLayer(nn.Module):
         y_pred = torch.transpose(y_pred, 1, 0)
         y_pred += self.bias
         return y_pred
-
-def get_random_glorot_uniform_matrix(shape: tuple):
-    limit = np.sqrt(6 / sum(shape))
-    return np.random.uniform(-limit, limit, size=shape)
 
 def standard_dims_in_dims_out_computation(input_size: int, output_size: int, nb_states: int):
     dims_in = int(input_size / nb_states) * np.ones((nb_states,), dtype='int32')
