@@ -127,3 +127,8 @@ class HMatrixComponent:
                 self.add_cached_error_reduction(error_reduction=error_reduction)
 
         return error_reduction
+
+    def clear_full_rank_parts_and_cached_values(self):
+        self.cached_error_reductions = None
+        self.left_full_component = None
+        self.right_full_component = None

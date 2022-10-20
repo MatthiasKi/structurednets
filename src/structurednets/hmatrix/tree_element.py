@@ -168,3 +168,9 @@ class TreeElement:
                 return []
         else:
             return sum([child.get_all_elements_where_parameters_can_be_added(parameters_left=parameters_left) for child in self.children], [])
+
+    def recursively_clear_full_rank_parts_and_cached_values(self):
+        self.hmatrix_component.clear_full_rank_parts_and_cached_values()
+        if not self.is_leaf():
+            for child in self.children:
+                child.recursively_clear_full_rank_parts_and_cached_values()

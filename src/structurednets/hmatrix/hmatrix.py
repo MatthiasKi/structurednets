@@ -51,6 +51,9 @@ class HMatrix:
 
             elements_where_parameters_can_be_added = self.block_cluster_tree.get_all_elements_where_parameters_can_be_added(max_nb_parameters=max_nb_parameters)
 
+    def clear_full_rank_parts_and_cached_values(self):
+        self.block_cluster_tree.clear_full_rank_parts_and_cached_values()
+
     def dot(self, vec: torch.tensor) -> torch.tensor:
         assert hasattr(self, "shape"), "The approximation must be performed before calling dot()"
         assert len(vec.shape) == 1 or vec.shape[0] == 1 or vec.shape[1] == 1, "dot is only implemented for vectors"

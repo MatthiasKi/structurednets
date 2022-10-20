@@ -55,6 +55,9 @@ class BlockClusterTree:
         parameters_left = max_nb_parameters - self.get_nb_params()
         return self.root.get_all_elements_where_parameters_can_be_added(parameters_left=parameters_left)
 
+    def clear_full_rank_parts_and_cached_values(self):
+        self.root.recursively_clear_full_rank_parts_and_cached_values()
+
     def plot(self):
         _, ax = plt.subplots()
         cmap = matplotlib.cm.get_cmap('Paired')

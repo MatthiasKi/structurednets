@@ -35,6 +35,7 @@ class HEDLRApproximator(Approximator):
                 best_hmatrix_error = curr_error
                 best_hmatrix = hmatrix
 
+        best_hmatrix.clear_full_rank_parts_and_cached_values()
         res_dict = dict()
         res_dict["type"] = "HEDLRApproximator"
         res_dict["h_matrix"] = best_hmatrix
