@@ -34,17 +34,15 @@ class HMatrix:
 
         elements_where_parameters_can_be_added = self.block_cluster_tree.get_all_elements_where_parameters_can_be_added(max_nb_parameters=max_nb_parameters)
         while len(elements_where_parameters_can_be_added) > 0:
-            best_error = self.get_curr_error(optim_mat=optim_mat)
+            best_error_reduction = None
             best_element_to_add_parameters = None
+
             for element_where_parameters_can_be_added in elements_where_parameters_can_be_added:
-                element_where_parameters_can_be_added.add_singular_value_to_approximation()
-
-                error_after_modification = self.get_curr_error(optim_mat=optim_mat)
-                if error_after_modification < best_error:
-                    best_error = error_after_modification
+                curr_element_error_reduction = element_where_parameters_can_be_added.get_error_reduction_for_adding_a_singular_value(optim_mat=optim_mat, cache_result=True)
+                if best_error_reduction is None \
+                    or curr_element_error_reduction < best_error_reduction:
+                    best_error_reduction = curr_element_error_reduction
                     best_element_to_add_parameters = element_where_parameters_can_be_added
-
-                element_where_parameters_can_be_added.remove_singular_value_from_approximation()
 
             if best_element_to_add_parameters is None:
                 break

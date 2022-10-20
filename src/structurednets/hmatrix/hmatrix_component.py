@@ -30,6 +30,9 @@ class HMatrixComponent:
         else:
             return torch.zeros(self.get_component_shape())
 
+    def to_dense_numpy(self):
+        return self.to_dense().detach().numpy()
+
     def get_nb_params(self):
         if self.are_low_rank_components_set():
             return torch.numel(self.left_lr) + torch.numel(self.right_lr)
@@ -65,16 +68,18 @@ class HMatrixComponent:
         else:
             return self.left_lr.shape[1] == self.right_lr.shape[0]
 
+    def get_current_nb_singular_values(self):
+        if self.left_lr is None:
+            return 0
+        else:
+            return self.left_lr.shape[1]
+
     def add_singular_value_to_approximation(self):
         assert self.is_low_rank(), "Can only add singular values to leafs which are low rank"
         assert self.is_full_component_set(), "Can only add singular values when information about the full component had been given beforehand"
         assert self.do_low_rank_component_shapes_match(), "Mismatch between the low rank components"
         
-        if self.left_lr is None:
-            nb_singular_values = 1
-        else:
-            nb_singular_values = self.left_lr.shape[1] + 1
-        
+        nb_singular_values = self.get_current_nb_singular_values() + 1        
         self.left_lr = self.left_full_component[:, :nb_singular_values]
         self.right_lr = self.right_full_component[:nb_singular_values, :]
 
@@ -88,3 +93,37 @@ class HMatrixComponent:
         else:
             self.left_lr = self.left_lr[:, :-1]
             self.right_lr = self.right_lr[:-1, :]
+
+    def get_curr_local_error(self, optim_mat: np.ndarray) -> float:
+        optim_mat_part = optim_mat[self.row_range.start:self.row_range.stop, self.col_range.start:self.col_range.stop]
+        return np.linalg.norm(optim_mat_part - self.to_dense_numpy(), ord="fro")
+
+    def has_cached_error_reductions(self):
+        return hasattr(self, "cached_error_reductions")
+
+    def has_cached_error_reduction(self, nb_singular_values: int) -> bool:
+        if not self.has_cached_error_reductions():
+            return False
+        else:
+            return nb_singular_values in self.cached_error_reductions
+
+    def add_cached_error_reduction(self, error_reduction: float):
+        if not self.has_cached_error_reductions():
+            self.cached_error_reductions = dict()
+        
+        self.cached_error_reductions[self.get_current_nb_singular_values()] = error_reduction
+
+    def get_error_reduction_for_adding_a_singular_value(self, optim_mat: np.ndarray, cache_result=True) -> float:
+        if self.has_cached_error_reduction(nb_singular_values=self.get_current_nb_singular_values()):
+            error_reduction = self.cached_error_reductions[self.get_current_nb_singular_values()]
+        else:
+            error_before = self.get_curr_local_error(optim_mat=optim_mat)
+            self.add_singular_value_to_approximation()
+            error_after = self.get_curr_local_error(optim_mat=optim_mat)
+            self.remove_singular_value_from_approximation()
+
+            error_reduction = error_before - error_after
+            if cache_result:
+                self.add_cached_error_reduction(error_reduction=error_reduction)
+
+        return error_reduction

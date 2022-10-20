@@ -1,4 +1,5 @@
 import torch
+import numpy as np
 
 from structurednets.hmatrix.hmatrix_component import HMatrixComponent
 from structurednets.hmatrix.hmatrix_functions import get_range_as_indices, do_index_lists_overlap, are_index_lists_equal, get_range_combinations_without_permutation
@@ -24,6 +25,11 @@ class TreeElement:
     def remove_singular_value_from_approximation(self):
         assert self.is_leaf(), "Can only modify the HMatrixComponent of leaf nodes"
         self.hmatrix_component.remove_singular_value_from_approximation()
+
+    def get_error_reduction_for_adding_a_singular_value(self, optim_mat: np.ndarray, cache_result: bool) -> float:
+        assert optim_mat.shape[0] >= self.row_range.stop, "The optim mat does not contain the row range of this tree element"
+        assert optim_mat.shape[1] >= self.col_range.stop, "The optim mat does not contain the col range of this tree element"
+        return self.hmatrix_component.get_error_reduction_for_adding_a_singular_value(optim_mat=optim_mat, cache_result=cache_result)
 
     def get_all_hmatrix_components(self) -> list:
         if self.is_leaf():
