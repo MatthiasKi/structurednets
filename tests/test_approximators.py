@@ -10,7 +10,7 @@ from structurednets.approximators.hedlr_approximator import HEDLRApproximator
 from structurednets.approximators.lr_approximator import LRApproximator
 from structurednets.approximators.sss_approximator_wrapper import SSSApproximatorWrapper
 
-class LayerTests(TestCase):
+class ApproximatorTests(TestCase):
     def test_psm_approximator(self):
         nnz_share = 0.2
         optim_mat = np.random.uniform(-1,1, size=(51,10))
