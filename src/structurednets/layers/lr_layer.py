@@ -5,8 +5,6 @@ import numpy as np
 from structurednets.layers.layer_helpers import get_random_glorot_uniform_matrix
 from structurednets.approximators.lr_approximator import LRApproximator
 
-# TODO use this layer interface for all other layers as well (to have a unified layer constructor)
-
 class LRLayer(nn.Module):
     def __init__(self, input_dim: int, output_dim: int, nb_params_share: float, use_bias=True, initial_weight_matrix=None, initial_bias=None):
         super(LRLayer, self).__init__()
