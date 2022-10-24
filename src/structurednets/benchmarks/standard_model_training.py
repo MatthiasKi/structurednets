@@ -10,7 +10,7 @@ from structurednets.models.alexnet import AlexNet
 from structurednets.features.extract_features import get_required_indices
 from structurednets.training_helpers import train
 
-def train_standard_model(features_filepath: str, path_to_labelfile: str, model_class: VisionModel, patience: int, batch_sizes: list, verbose_train_progress: bool, lrs: list, train_from_scratch: bool, use_softmaxes: list, output_foldername: str):
+def benchmark_train_standard_model(features_filepath: str, path_to_labelfile: str, model_class: VisionModel, patience: int, batch_sizes: list, verbose_train_progress: bool, lrs: list, train_from_scratch: bool, use_softmaxes: list, output_foldername: str):
     if not os.path.isdir(output_foldername):
         os.mkdir(output_foldername)
 
@@ -82,7 +82,7 @@ if __name__ == "__main__":
     use_softmaxes = [True, False]
     output_foldername = "/path/to/finetuned_models/"
 
-    train_standard_model(
+    benchmark_train_standard_model(
         features_filepath=features_filepath,
         path_to_labelfile=path_to_labelfile,
         model_class=model_class,

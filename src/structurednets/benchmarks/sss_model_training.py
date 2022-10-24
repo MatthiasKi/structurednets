@@ -16,7 +16,7 @@ from structurednets.features.extract_features import get_required_indices, get_f
 from structurednets.training_helpers import train
 from structurednets.layers.sss_layer import SemiseparableLayer
 
-def train_sss_model(
+def benchmark_train_sss_model(
     features_basepath: str, 
     paths_to_labelfile: list, 
     model_classes: list, 
@@ -129,7 +129,7 @@ if __name__ == "__main__":
     output_foldername = "/path/to/outputfolder/"
     iterations = 5
 
-    train_sss_model(
+    benchmark_train_sss_model(
         features_basepath=features_basepath, 
         paths_to_labelfile=paths_to_labelfile,
         model_classes=model_classes, 
