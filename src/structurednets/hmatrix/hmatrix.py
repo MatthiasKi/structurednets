@@ -29,7 +29,7 @@ class HMatrix:
 
         leaf_elements = self.block_cluster_tree.get_all_leaf_elements()
         for leaf_element in leaf_elements:
-            full_component = optim_mat[leaf_element.row_range, :][:, leaf_element.col_range]
+            full_component = optim_mat[leaf_element.row_range.start:leaf_element.row_range.stop, leaf_element.col_range.start:leaf_element.col_range.stop]
             leaf_element.hmatrix_component.set_full_component(full_component)
 
         elements_where_parameters_can_be_added = self.block_cluster_tree.get_all_elements_where_parameters_can_be_added(max_nb_parameters=max_nb_parameters)
@@ -40,7 +40,7 @@ class HMatrix:
             for element_where_parameters_can_be_added in elements_where_parameters_can_be_added:
                 curr_element_error_reduction = element_where_parameters_can_be_added.get_error_reduction_for_adding_a_singular_value(optim_mat=optim_mat, cache_result=True)
                 if best_error_reduction is None \
-                    or curr_element_error_reduction < best_error_reduction:
+                    or curr_element_error_reduction > best_error_reduction:
                     best_error_reduction = curr_element_error_reduction
                     best_element_to_add_parameters = element_where_parameters_can_be_added
 

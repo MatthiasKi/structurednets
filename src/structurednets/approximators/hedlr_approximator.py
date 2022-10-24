@@ -53,3 +53,7 @@ if __name__ == "__main__":
     approximator = HEDLRApproximator()
     res = approximator.approximate(optim_mat=optim_mat, nb_params_share=0.5)
     print("Approximation Error: " + str(np.linalg.norm(res["approx_mat_dense"] - optim_mat, ord="fro")))
+
+    hmatrix = res["h_matrix"]
+    nb_hmatrix_components = len(hmatrix.block_cluster_tree.get_all_hmatrix_components())
+    print("Nb Components: " + str(nb_hmatrix_components))

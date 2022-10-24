@@ -81,13 +81,17 @@ class ApproximatorTests(TestCase):
         self.assertTrue(np.array_equal(approx_mat_dense.shape, np.array([51, 10])), "The approximated optim_mat has the wrong shape")
 
     def test_hodlr_with_hodlr_matrix(self):
-        rand_mat = np.random.uniform(-1,1, size=(47,34))
-        approximator_1 = HODLRApproximator()
-        res = approximator_1.approximate(rand_mat, nb_params_share=0.2)
-        optim_mat = res["approx_mat_dense"]
-
+        first_dim_half = 50
+        second_dim_half = 25
+        low_rank = 8
+        optim_mat = np.zeros((2*first_dim_half, 2*second_dim_half))
+        optim_mat[:first_dim_half, :second_dim_half] = np.random.uniform(-1, 1, size=(first_dim_half, low_rank)) @ np.random.uniform(-1, 1, size=(low_rank, second_dim_half))
+        optim_mat[first_dim_half:, :second_dim_half] = np.random.uniform(-1, 1, size=(first_dim_half, low_rank)) @ np.random.uniform(-1, 1, size=(low_rank, second_dim_half))
+        optim_mat[:first_dim_half, second_dim_half:] = np.random.uniform(-1, 1, size=(first_dim_half, low_rank)) @ np.random.uniform(-1, 1, size=(low_rank, second_dim_half))
+        optim_mat[first_dim_half:, second_dim_half:] = np.random.uniform(-1, 1, size=(first_dim_half, low_rank)) @ np.random.uniform(-1, 1, size=(low_rank, second_dim_half))
+        
         approximator_2 = HODLRApproximator()
-        res = approximator_2.approximate(optim_mat, nb_params_share=0.2)
+        res = approximator_2.approximate(optim_mat, nb_params_share=0.5)
         approx_mat_dense = res["approx_mat_dense"]
         self.assertTrue(np.allclose(optim_mat, approx_mat_dense, rtol=1e-5, atol=1e-5), "The HODLR approximation algorithm should be able to fully recover a HODLR matrix")
 
@@ -100,12 +104,16 @@ class ApproximatorTests(TestCase):
         self.assertTrue(np.array_equal(approx_mat_dense.shape, np.array([51, 10])), "The approximated optim_mat has the wrong shape")
 
     def test_hedlr_with_hodlr_matrix(self):
-        rand_mat = np.random.uniform(-1,1, size=(47,34))
-        approximator_1 = HEDLRApproximator()
-        res = approximator_1.approximate(rand_mat, nb_params_share=0.2)
-        optim_mat = res["approx_mat_dense"]
-
+        first_dim_half = 50
+        second_dim_half = 25
+        low_rank = 8
+        optim_mat = np.zeros((2*first_dim_half, 2*second_dim_half))
+        optim_mat[:first_dim_half, :second_dim_half] = np.random.uniform(-1, 1, size=(first_dim_half, low_rank)) @ np.random.uniform(-1, 1, size=(low_rank, second_dim_half))
+        optim_mat[first_dim_half:, :second_dim_half] = np.random.uniform(-1, 1, size=(first_dim_half, low_rank)) @ np.random.uniform(-1, 1, size=(low_rank, second_dim_half))
+        optim_mat[:first_dim_half, second_dim_half:] = np.random.uniform(-1, 1, size=(first_dim_half, low_rank)) @ np.random.uniform(-1, 1, size=(low_rank, second_dim_half))
+        optim_mat[first_dim_half:, second_dim_half:] = np.random.uniform(-1, 1, size=(first_dim_half, low_rank)) @ np.random.uniform(-1, 1, size=(low_rank, second_dim_half))
+        
         approximator_2 = HEDLRApproximator()
-        res = approximator_2.approximate(optim_mat, nb_params_share=0.2)
+        res = approximator_2.approximate(optim_mat, nb_params_share=0.5)
         approx_mat_dense = res["approx_mat_dense"]
         self.assertTrue(np.allclose(optim_mat, approx_mat_dense, rtol=1e-5, atol=1e-5), "The HEDLR approximation algorithm should be able to fully recover a HEDLR matrix")

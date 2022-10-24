@@ -62,14 +62,14 @@ class BlockClusterTree:
         _, ax = plt.subplots()
         cmap = matplotlib.cm.get_cmap('Paired')
 
-        leaf_ranges = self.get_all_leaf_ranges()
+        hmatrix_components = self.get_all_hmatrix_components()
 
         max_row_idx = 0
         max_col_idx = 0
-        for leaf_range in leaf_ranges:
-            left_lower_pos = (leaf_range[1].start, -leaf_range[0].start)
-            width = leaf_range[1].stop - leaf_range[1].start
-            height = - (leaf_range[0].stop - leaf_range[0].start)
+        for hmatrix_component in hmatrix_components:
+            left_lower_pos = (hmatrix_component.col_range.start, -hmatrix_component.row_range.start)
+            width = hmatrix_component.col_range.stop - hmatrix_component.col_range.start
+            height = - (hmatrix_component.row_range.stop - hmatrix_component.row_range.start)
 
             ax.add_patch(
                 Rectangle(
@@ -80,9 +80,10 @@ class BlockClusterTree:
                     facecolor=cmap(np.random.uniform(0, 1))
                 )
             )
+            ax.text(left_lower_pos[0] + width / 2, left_lower_pos[1] + height / 2, str(hmatrix_component.get_current_nb_singular_values()))
 
-            max_row_idx = max(leaf_range[0].stop, max_row_idx)
-            max_col_idx = max(leaf_range[1].stop, max_col_idx)
+            max_row_idx = max(hmatrix_component.row_range.stop, max_row_idx)
+            max_col_idx = max(hmatrix_component.col_range.stop, max_col_idx)
 
         plt.xlim([0, max_col_idx])
         plt.ylim([-max_row_idx, 0])
