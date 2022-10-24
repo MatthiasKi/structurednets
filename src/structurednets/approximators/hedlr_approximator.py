@@ -4,6 +4,7 @@ from structurednets.approximators.approximator import Approximator
 from structurednets.hmatrix.block_cluster_tree import BlockClusterTree
 from structurednets.hmatrix.tree_element import TreeElement
 from structurednets.hmatrix.hmatrix import HMatrix
+from structurednets.models.googlenet import GoogleNet
 
 def build_hedlr_block_cluster_tree(depth: int, matrix_shape: tuple, min_block_size=2) -> BlockClusterTree:
     root = TreeElement(children=None, row_range=range(matrix_shape[0]), col_range=range(matrix_shape[1]))
@@ -49,9 +50,12 @@ if __name__ == "__main__":
     tree = build_hedlr_block_cluster_tree(4, (100, 100))
     #tree.plot()
 
-    optim_mat = np.random.uniform(-1,1, size=(51,10))
+    #optim_mat = np.random.uniform(-1,1, size=(51,10))
+    model = GoogleNet(output_indices=np.arange(1000), use_gpu=False)
+    optim_mat = model.get_optimization_matrix().detach().numpy()
+
     approximator = HEDLRApproximator()
-    res = approximator.approximate(optim_mat=optim_mat, nb_params_share=0.5)
+    res = approximator.approximate(optim_mat=optim_mat, nb_params_share=0.4)
     print("Approximation Error: " + str(np.linalg.norm(res["approx_mat_dense"] - optim_mat, ord="fro")))
 
     hmatrix = res["h_matrix"]
