@@ -8,7 +8,7 @@ from structurednets.asset_helpers import get_animal_classes_filepath
 from structurednets.models.visionmodel import VisionModel
 from structurednets.models.alexnet import AlexNet
 from structurednets.features.extract_features import get_required_indices
-from structurednets.training_helpers import train
+from structurednets.training_helpers import train_with_features
 
 def benchmark_train_standard_model(features_filepath: str, path_to_labelfile: str, model_class: VisionModel, patience: int, batch_sizes: list, verbose_train_progress: bool, lrs: list, train_from_scratch: bool, use_softmaxes: list, output_foldername: str):
     if not os.path.isdir(output_foldername):
@@ -40,7 +40,7 @@ def benchmark_train_standard_model(features_filepath: str, path_to_labelfile: st
                         linear_layer,
                     )
 
-                start_train_loss, start_train_accuracy, start_val_loss, start_val_accuracy, train_loss_history, train_accuracy_history, val_loss_history, val_accuracy_history = train(model=model, features_path=features_filepath, patience=patience, batch_size=batch_size, verbose=verbose_train_progress, lr=lr)
+                start_train_loss, start_train_accuracy, start_val_loss, start_val_accuracy, train_loss_history, train_accuracy_history, val_loss_history, val_accuracy_history = train_with_features(model=model, features_path=features_filepath, patience=patience, batch_size=batch_size, verbose=verbose_train_progress, lr=lr)
 
                 output_filename = model_class.__name__ + "_standard_finetune_res_lr_" + str(lr) + "_batch_size_" + str(batch_size)
                 if train_from_scratch:

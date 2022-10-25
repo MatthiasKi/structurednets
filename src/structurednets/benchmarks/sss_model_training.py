@@ -13,7 +13,7 @@ from structurednets.models.resnet18 import Resnet18
 from structurednets.models.vgg16 import VGG16
 from structurednets.models.visionmodel import VisionModel
 from structurednets.features.extract_features import get_required_indices, get_features_output_filename
-from structurednets.training_helpers import train
+from structurednets.training_helpers import train_with_features
 from structurednets.layers.sss_layer import SemiseparableLayer
 
 def benchmark_train_sss_model(
@@ -91,7 +91,7 @@ def benchmark_train_sss_model(
                                             only_approx_output_filename += "_only_approx.p"
                                             pickle.dump(res, open(os.path.join(output_foldername, only_approx_output_filename), "wb"))
 
-                                        model, start_train_loss, start_train_accuracy, start_val_loss, start_val_accuracy, train_loss_history, train_accuracy_history, val_loss_history, val_accuracy_history = train(model=model, features_path=features_filepath, patience=patience, batch_size=batch_size, verbose=verbose_train_progress, lr=lr, restore_best_model=True)
+                                        model, start_train_loss, start_train_accuracy, start_val_loss, start_val_accuracy, train_loss_history, train_accuracy_history, val_loss_history, val_accuracy_history = train_with_features(model=model, features_path=features_filepath, patience=patience, batch_size=batch_size, verbose=verbose_train_progress, lr=lr, restore_best_model=True)
 
                                         res["start_train_loss"] = start_train_loss
                                         res["start_train_accuracy"] = start_train_accuracy

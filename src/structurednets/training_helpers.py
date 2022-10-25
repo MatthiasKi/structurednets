@@ -31,8 +31,16 @@ def get_batch(X: np.ndarray, y: np.ndarray, batch_size: int, batch_i: int):
 def get_full_batch(X: np.ndarray, y: np.ndarray):
     return get_batch(X=X, y=y, batch_size=X.shape[0], batch_i=0)
 
-def train(model: torch.nn.Module, features_path: str, patience=10, batch_size=1000, verbose=False, lr=1e-6, restore_best_model=True):
+def train_with_features(model: torch.nn.Module, features_path: str, patience=10, batch_size=1000, verbose=False, lr=1e-6, restore_best_model=True):
     X_train, X_val, y_train, y_val = get_train_data(features_path)
+    return train(
+        model=model, X_train=X_train, X_val=X_val, y_train=y_train, y_val=y_val,
+        patience=patience, batch_size=batch_size, verbose=verbose, lr=lr, restore_best_model=restore_best_model
+    )
+
+def train(model: torch.nn.Module, X_train: np.ndarray, y_train: np.ndarray, X_val=None, y_val=None, patience=10, batch_size=1000, verbose=False, lr=1e-6, restore_best_model=True):
+    if X_val is None or y_val is None:
+        X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
     loss_function = torch.nn.CrossEntropyLoss()
