@@ -5,6 +5,7 @@ import numpy as np
 
 from structurednets.layers.layer_helpers import get_random_glorot_uniform_matrix
 from structurednets.approximators.psm_approximator_wrapper import PSMApproximatorWrapper
+from structurednets.layers.layer_helpers import get_nb_model_parameters
 
 class PSMLayer(nn.Module):
     def __init__(self, input_dim: int, output_dim: int, use_bias=True, nb_params_share=None, initial_weight_matrix=None, initial_bias=None, sparse_matrices=None):
@@ -30,7 +31,8 @@ class PSMLayer(nn.Module):
             sparse_matrices = res_dict["faust_approximation"]
 
         self.sparse_matrices = [self.scipy_csr_to_torch(mat) for mat in sparse_matrices]
-        self.sparse_matrices = self.sparse_matrices[::-1] # Needed in order to transpose        
+        self.sparse_matrices = self.sparse_matrices[::-1] # Needed in order to transpose
+        self.sparse_matrices = [nn.Parameter(mat) for mat in self.sparse_matrices] 
         self.sparse_matrices = nn.ParameterList(self.sparse_matrices)
         
     def scipy_csr_to_torch(self, mat: scipy.sparse.csr_matrix) -> torch.tensor:
@@ -61,9 +63,25 @@ def build_PSMLayer_from_res_dict(res_dict: dict, bias: np.ndarray) -> PSMLayer:
     
     shape = res_dict["approx_mat_dense"].shape
     layer = PSMLayer(input_dim=shape[1], output_dim=shape[0], sparse_matrices=sparse_matrices, initial_bias=bias)
+    layer_without_bias = PSMLayer(input_dim=shape[1], output_dim=shape[0], sparse_matrices=sparse_matrices, use_bias=False)
 
     approx_mat_dense = torch.tensor(res_dict["approx_mat_dense"]).float()
-    multiplied_mat = layer.forward(torch.eye(sparse_matrices[-1].shape[-1]).float(), apply_bias=False)
+    multiplied_mat = layer_without_bias.forward(torch.eye(sparse_matrices[-1].shape[-1]).float())
     assert torch.allclose(approx_mat_dense, multiplied_mat), f"The out-multiplied mat should match the approx_mat_dense computed during approximation; Frobenius Norm: {torch.frobenius_norm(approx_mat_dense - multiplied_mat)}"
 
     return layer
+
+if __name__ == "__main__":
+    input_dim = 51
+    output_dim = 40
+    initial_weight_matrix = np.random.uniform(-1, 1, size=(output_dim, input_dim))
+
+
+    nb_param_share = 0.2
+    max_nb_parameters = int(nb_param_share * input_dim * output_dim)
+    min_nb_parameters = int((nb_param_share - 0.1) * input_dim * output_dim)
+    
+    layer = PSMLayer(input_dim=input_dim, output_dim=output_dim, use_bias=False, nb_params_share=nb_param_share)
+    nb_params = get_nb_model_parameters(layer)
+
+    halt = 1

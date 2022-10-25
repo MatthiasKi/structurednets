@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 
-from structurednets.layers.layer_helpers import get_random_glorot_uniform_matrix
+from structurednets.layers.layer_helpers import get_random_glorot_uniform_matrix, get_nb_model_parameters
 from structurednets.approximators.lr_approximator import LRApproximator
 
 class LRLayer(nn.Module):
@@ -25,8 +25,8 @@ class LRLayer(nn.Module):
             self.left_lr = torch.tensor(res_dict["left_mat"])
             self.right_lr = torch.tensor(res_dict["right_mat"])
         else:
-            self.left_lr = torch.tensor(get_random_glorot_uniform_matrix(output_dim, rank))
-            self.right_lr = torch.tensor(get_random_glorot_uniform_matrix(rank, input_dim))
+            self.left_lr = torch.tensor(get_random_glorot_uniform_matrix((output_dim, rank)))
+            self.right_lr = torch.tensor(get_random_glorot_uniform_matrix((rank, input_dim)))
 
         self.left_lr = nn.Parameter(self.left_lr.float())
         self.right_lr = nn.Parameter(self.right_lr.float())
@@ -60,3 +60,18 @@ class LRLayer(nn.Module):
         if self.use_bias:
             res += torch.numel(self.bias)
         return int(res)
+
+if __name__ == "__main__":
+    input_dim = 51
+    output_dim = 40
+    initial_weight_matrix = np.random.uniform(-1, 1, size=(output_dim, input_dim))
+
+
+    nb_param_share = 0.2
+    max_nb_parameters = int(nb_param_share * input_dim * output_dim)
+    min_nb_parameters = int((nb_param_share - 0.1) * input_dim * output_dim)
+    
+    layer = LRLayer(input_dim=input_dim, output_dim=output_dim, use_bias=False, nb_params_share=nb_param_share)
+    nb_params = get_nb_model_parameters(layer)
+
+    halt = 1

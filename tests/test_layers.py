@@ -4,11 +4,42 @@ import torch
 
 from structurednets.layers.sss_layer import SemiseparableLayer
 from structurednets.layers.lr_layer import LRLayer
+from structurednets.layers.psm_layer import PSMLayer
+from structurednets.layers.layer_helpers import get_nb_model_parameters
 
 class LayerTests(TestCase):
     def test_nb_parameters_are_correct(self):
-        # TODO add a test for checking if the instantiated layers (all layer types) have less parameter than the maximum number of allowed parameters
-        pass
+        input_dim = 31
+        output_dim = 20
+        initial_weight_matrix = np.random.uniform(-1, 1, size=(output_dim, input_dim))
+
+        nb_param_shares = np.linspace(0.1, 0.9, num=3)
+        for nb_param_share in nb_param_shares:
+            max_nb_parameters = int(nb_param_share * input_dim * output_dim)
+
+            layer = LRLayer(input_dim=input_dim, output_dim=output_dim, use_bias=False, nb_params_share=nb_param_share)
+            nb_params = get_nb_model_parameters(layer)
+            self.assertTrue(nb_params <= max_nb_parameters)
+
+            layer = LRLayer(input_dim=input_dim, output_dim=output_dim, use_bias=False, nb_params_share=nb_param_share, initial_weight_matrix=initial_weight_matrix)
+            nb_params = get_nb_model_parameters(layer)
+            self.assertTrue(nb_params <= max_nb_parameters)
+
+            layer = PSMLayer(input_dim=input_dim, output_dim=output_dim, use_bias=False, nb_params_share=nb_param_share)
+            nb_params = get_nb_model_parameters(layer)
+            self.assertTrue(nb_params <= max_nb_parameters)
+
+            layer = PSMLayer(input_dim=input_dim, output_dim=output_dim, use_bias=False, nb_params_share=nb_param_share, initial_weight_matrix=initial_weight_matrix)
+            nb_params = get_nb_model_parameters(layer)
+            self.assertTrue(nb_params <= max_nb_parameters)
+
+            layer = SemiseparableLayer(input_dim=input_dim, output_dim=output_dim, use_bias=False, nb_params_share=nb_param_share, nb_states=5)
+            nb_params = get_nb_model_parameters(layer)
+            self.assertTrue(nb_params <= max_nb_parameters)
+
+            layer = SemiseparableLayer(input_dim=input_dim, output_dim=output_dim, use_bias=False, nb_params_share=nb_param_share, initial_weight_matrix=initial_weight_matrix, nb_states=5)
+            nb_params = get_nb_model_parameters(layer)
+            self.assertTrue(nb_params <= max_nb_parameters)
 
     def test_train_to_zero(self):
         # TODO add a test for checking that all layers can be trained to learn to output only zeros
