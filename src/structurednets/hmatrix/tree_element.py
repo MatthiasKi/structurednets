@@ -117,7 +117,7 @@ class TreeElement:
         else:
             return all([child.recursive_check_if_children_span_all_indices() for child in self.children])
 
-    def split_hodlr_style(self, matrix_shape: tuple, min_block_size=2, check_if_on_diagonal=True):
+    def split_into_four_children_if_applicable(self, matrix_shape: tuple, min_block_size=2, check_if_on_diagonal=True):
         assert min_block_size > 1, "The minimum block size must be greater than 1"
 
         if self.is_leaf():
@@ -139,7 +139,7 @@ class TreeElement:
                 ]
         else:
             for child in self.children:
-                child.split_hodlr_style(matrix_shape=matrix_shape, min_block_size=min_block_size, check_if_on_diagonal=check_if_on_diagonal)
+                child.split_into_four_children_if_applicable(matrix_shape=matrix_shape, min_block_size=min_block_size, check_if_on_diagonal=check_if_on_diagonal)
 
     def get_max_nb_of_children(self):
         if self.children is None:

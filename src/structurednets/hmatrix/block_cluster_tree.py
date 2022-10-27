@@ -31,10 +31,10 @@ class BlockClusterTree:
         return self.root.recursive_check_if_children_span_all_indices()
 
     def split_hodlr_style(self, matrix_shape: tuple, min_block_size=2):
-        self.root.split_hodlr_style(matrix_shape=matrix_shape, min_block_size=min_block_size, check_if_on_diagonal=True)
+        self.root.split_into_four_children_if_applicable(matrix_shape=matrix_shape, min_block_size=min_block_size, check_if_on_diagonal=True)
 
     def split_hedlr_style(self, matrix_shape: tuple, min_block_size=2):
-        self.root.split_hodlr_style(matrix_shape=matrix_shape, min_block_size=min_block_size, check_if_on_diagonal=False)
+        self.root.split_into_four_children_if_applicable(matrix_shape=matrix_shape, min_block_size=min_block_size, check_if_on_diagonal=False)
 
     def get_max_nb_of_children(self):
         return self.root.get_max_nb_of_children()
