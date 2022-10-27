@@ -31,6 +31,12 @@ class TreeElement:
         assert optim_mat.shape[1] >= self.col_range.stop, "The optim mat does not contain the col range of this tree element"
         return self.hmatrix_component.get_error_reduction_for_adding_a_singular_value(optim_mat=optim_mat, cache_result=cache_result)
 
+    def get_nb_parameters_added_for_adding_a_singular_value(self) -> int:
+        return self.hmatrix_component.get_nb_parameters_added_for_adding_a_singular_value()
+
+    def get_relative_error_reduction_for_adding_a_singular_value(self, optim_mat: np.ndarray, cache_result: bool) -> float:
+        return self.get_error_reduction_for_adding_a_singular_value(optim_mat=optim_mat, cache_result=cache_result) / self.get_nb_parameters_added_for_adding_a_singular_value()
+
     def get_all_hmatrix_components(self) -> list:
         if self.is_leaf():
             return [self.hmatrix_component]

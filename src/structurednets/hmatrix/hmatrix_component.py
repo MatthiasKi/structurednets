@@ -128,6 +128,9 @@ class HMatrixComponent:
 
         return error_reduction
 
+    def get_nb_parameters_added_for_adding_a_singular_value(self) -> int:
+        return self.left_full_component.shape[0] + self.right_full_component.shape[1]
+
     def clear_full_rank_parts_and_cached_values(self):
         self.cached_error_reductions = None
         self.left_full_component = None
