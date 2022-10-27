@@ -21,11 +21,13 @@ def build_hedlr_block_cluster_tree(depth: int, matrix_shape: tuple, min_block_si
 
 class HEDLRApproximator(Approximator):
     # NOTE: HEDLR stands for "Hierarchicall equally distributed low rank [components]" (the name is created as pendant to the HODLR structure)
-    def approximate(self, optim_mat: np.ndarray, nb_params_share: float):
+    def approximate(self, optim_mat: np.ndarray, nb_params_share: float, max_depth=8):
+        assert max_depth >= 1, "The maximum depth must be >= 1"
+        
         best_hmatrix = None
         best_hmatrix_error = None
 
-        for depth in range(1, 8):
+        for depth in range(1, max_depth):
             block_cluster_tree = build_hedlr_block_cluster_tree(depth=depth, matrix_shape=optim_mat.shape)
             hmatrix = HMatrix(block_cluster_tree=block_cluster_tree)
             hmatrix.find_best_leaf_approximation(optim_mat=optim_mat, nb_params_share=nb_params_share)
