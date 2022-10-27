@@ -74,3 +74,16 @@ class HMatrixFrameWorkTests(TestCase):
 
         component.remove_singular_value_from_approximation()
         self.assertTrue(component.left_lr is None and component.right_lr is None)
+
+    def test_get_row_col_dist_function(self):
+        element = TreeElement(children=None, row_range=range(10), col_range=range(15, 20))
+        self.assertTrue(element.get_row_col_dist() == 5)
+
+        element = TreeElement(children=None, row_range=range(15, 20), col_range=range(10))
+        self.assertTrue(element.get_row_col_dist() == 5)
+
+        element = TreeElement(children=None, row_range=range(10), col_range=range(5, 15))
+        self.assertTrue(element.get_row_col_dist() == 0)
+
+        element = TreeElement(children=None, row_range=range(5, 15), col_range=range(10))
+        self.assertTrue(element.get_row_col_dist() == 0)

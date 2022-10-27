@@ -36,6 +36,9 @@ class BlockClusterTree:
     def split_hedlr_style(self, matrix_shape: tuple, min_block_size=2):
         self.root.split_into_four_children_if_applicable(matrix_shape=matrix_shape, min_block_size=min_block_size, check_if_on_diagonal=False)
 
+    def split_wrt_eta(self, matrix_shape: tuple, eta: float, min_block_size=2) -> bool:
+        return self.root.split_into_four_children_if_applicable(matrix_shape=matrix_shape, min_block_size=min_block_size, check_if_on_diagonal=False, eta=eta)
+
     def get_max_nb_of_children(self):
         return self.root.get_max_nb_of_children()
 
@@ -58,7 +61,7 @@ class BlockClusterTree:
     def clear_full_rank_parts_and_cached_values(self):
         self.root.recursively_clear_full_rank_parts_and_cached_values()
 
-    def check_validity(self):
+    def check_validity(self, matrix_shape: tuple):
         assert not self.do_children_in_tree_overlap(), "After constructing the HODLR block cluster tree, no children should overlap in the tree"
         assert self.contains_all_indices(matrix_shape=matrix_shape), "All indices of the matrix to be approximated should be contained in the block cluster tree"
         assert self.do_children_span_all_indices(), "The children of the tree should span all indices after constructing the HODLR block cluster tree"

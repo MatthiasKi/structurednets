@@ -117,7 +117,22 @@ class TreeElement:
         else:
             return all([child.recursive_check_if_children_span_all_indices() for child in self.children])
 
-    def split_into_four_children_if_applicable(self, matrix_shape: tuple, min_block_size=2, check_if_on_diagonal=True):
+    def get_diam(self, rg: range) -> int:
+        return rg.stop - rg.start
+
+    def get_row_col_dist(self) -> int:
+        if self.col_range.stop < self.row_range.start:
+            return self.row_range.start - self.col_range.stop
+        elif (self.col_range.stop >= self.row_range.start and self.col_range.stop <= self.row_range.stop) \
+            or (self.col_range.start >= self.row_range.start and self.col_range.start <= self.row_range.stop):
+            return 0
+        else:
+            return self.col_range.start - self.row_range.stop
+
+    def is_admissible(self, eta: float) -> bool:
+        return max(self.get_diam(self.row_range), self.get_diam(self.col_range)) <= 2 * eta * self.get_row_col_dist()
+
+    def split_into_four_children_if_applicable(self, matrix_shape: tuple, min_block_size=2, check_if_on_diagonal=True, eta=None) -> bool:
         assert min_block_size > 1, "The minimum block size must be greater than 1"
 
         if self.is_leaf():
@@ -126,6 +141,10 @@ class TreeElement:
                 and (
                     not check_if_on_diagonal
                     or self.is_on_diagonal(matrix_shape=matrix_shape)
+                ) \
+                and (
+                    eta is None
+                    or not self.is_admissible(eta=eta)
                 ):
 
                 row_range_mid_point = int((self.row_range.stop + self.row_range.start) / 2)
@@ -137,9 +156,10 @@ class TreeElement:
                     TreeElement(None, range(self.row_range.start, row_range_mid_point), range(col_range_mid_point, self.col_range.stop)),
                     TreeElement(None, range(row_range_mid_point, self.row_range.stop), range(col_range_mid_point, self.col_range.stop)),
                 ]
+                return True
+            return False
         else:
-            for child in self.children:
-                child.split_into_four_children_if_applicable(matrix_shape=matrix_shape, min_block_size=min_block_size, check_if_on_diagonal=check_if_on_diagonal)
+            return any([child.split_into_four_children_if_applicable(matrix_shape=matrix_shape, min_block_size=min_block_size, check_if_on_diagonal=check_if_on_diagonal, eta=eta) for child in self.children])
 
     def get_max_nb_of_children(self):
         if self.children is None:
