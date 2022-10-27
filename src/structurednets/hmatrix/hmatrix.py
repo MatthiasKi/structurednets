@@ -4,8 +4,10 @@ import numpy as np
 from structurednets.hmatrix.block_cluster_tree import BlockClusterTree
 
 class HMatrix:
-    def __init__(self, block_cluster_tree: BlockClusterTree):
+    def __init__(self, block_cluster_tree: BlockClusterTree, shape=None):
         self.block_cluster_tree = block_cluster_tree
+        if shape is not None:
+            self.shape = shape
 
     def to_dense(self) -> torch.tensor:
         assert hasattr(self, "shape"), "The approximation must be performed before calling to_dense()"
@@ -38,7 +40,7 @@ class HMatrix:
             best_element_to_add_parameters = None
 
             for element_where_parameters_can_be_added in elements_where_parameters_can_be_added:
-                curr_element_error_reduction = element_where_parameters_can_be_added.get_error_reduction_for_adding_a_singular_value(optim_mat=optim_mat, cache_result=True)
+                curr_element_error_reduction = element_where_parameters_can_be_added.get_relative_error_reduction_for_adding_a_singular_value(optim_mat=optim_mat, cache_result=True)
                 if best_error_reduction is None \
                     or curr_element_error_reduction > best_error_reduction:
                     best_error_reduction = curr_element_error_reduction
