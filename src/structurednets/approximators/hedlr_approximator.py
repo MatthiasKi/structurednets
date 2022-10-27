@@ -9,14 +9,9 @@ from structurednets.models.googlenet import GoogleNet
 def build_hedlr_block_cluster_tree(depth: int, matrix_shape: tuple, min_block_size=2) -> BlockClusterTree:
     root = TreeElement(children=None, row_range=range(matrix_shape[0]), col_range=range(matrix_shape[1]))
     res = BlockClusterTree(root=root)
-
     for _ in range(1, depth):
         res.split_hedlr_style(matrix_shape=matrix_shape, min_block_size=min_block_size)
-
-    assert not res.do_children_in_tree_overlap(), "After constructing the HODLR block cluster tree, no children should overlap in the tree"
-    assert res.contains_all_indices(matrix_shape=matrix_shape), "All indices of the matrix to be approximated should be contained in the block cluster tree"
-    assert res.do_children_span_all_indices(), "The children of the tree should span all indices after constructing the HODLR block cluster tree"
-
+    res.check_validity()
     return res
 
 class HEDLRApproximator(Approximator):

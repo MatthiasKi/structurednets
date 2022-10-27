@@ -58,6 +58,11 @@ class BlockClusterTree:
     def clear_full_rank_parts_and_cached_values(self):
         self.root.recursively_clear_full_rank_parts_and_cached_values()
 
+    def check_validity(self):
+        assert not self.do_children_in_tree_overlap(), "After constructing the HODLR block cluster tree, no children should overlap in the tree"
+        assert self.contains_all_indices(matrix_shape=matrix_shape), "All indices of the matrix to be approximated should be contained in the block cluster tree"
+        assert self.do_children_span_all_indices(), "The children of the tree should span all indices after constructing the HODLR block cluster tree"
+
     def plot(self):
         _, ax = plt.subplots()
         cmap = matplotlib.cm.get_cmap('Paired')
