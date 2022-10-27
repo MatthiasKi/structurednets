@@ -11,11 +11,11 @@ def build_hodlr_block_cluster_tree(depth: int, matrix_shape: tuple, min_block_si
     res = BlockClusterTree(root=root)
     for _ in range(1, depth):
         res.split_hodlr_style(matrix_shape=matrix_shape, min_block_size=min_block_size)
-    res.check_validity()
+    res.check_validity(matrix_shape=matrix_shape)
     return res
 
 class HODLRApproximator(Approximator):
-    def approximate(self, optim_mat: np.ndarray, nb_params_share: float, max_depth=8):
+    def approximate(self, optim_mat: np.ndarray, nb_params_share: float, max_depth=5):
         best_hmatrix = None
         best_hmatrix_error = None
 
@@ -41,8 +41,8 @@ class HODLRApproximator(Approximator):
         return "HODLRApproximator"
 
 if __name__ == "__main__":
-    tree = build_hodlr_block_cluster_tree(4, (100, 100))
-    #tree.plot()
+    tree = build_hodlr_block_cluster_tree(8, (100, 100))
+    tree.plot()
 
     model = GoogleNet(output_indices=np.arange(1000), use_gpu=False)
     optim_mat = model.get_optimization_matrix().detach().numpy()
