@@ -2,7 +2,7 @@ import pickle
 import os 
 import torch 
 
-from structurednets.training_helpers import get_accuracy, get_full_batch, get_train_data
+from structurednets.training_helpers import get_accuracy, get_full_batch, get_train_data, transform_feature_dtypes
 from structurednets.logging_helpers import write_header_to_file, log_to_file
 from structurednets.features.extract_features import get_required_indices
 from structurednets.asset_helpers import get_animal_classes_filepath, load_features, get_label_name_from_path
@@ -26,6 +26,7 @@ def benchmark_approximate_weight_matrix(model_class: VisionModel, features_filep
     bias = bias_t.cpu().detach().numpy()
 
     X_train, X_val, y_train, y_val = get_train_data(features_path=features_filepath)
+    X_train, X_val, y_train, y_val = transform_feature_dtypes(X_train=X_train, X_val=X_val, y_train=y_train, y_val=y_val)
     X_train_t, y_train_t = get_full_batch(X=X_train, y=y_train)
     X_val_t, y_val_t = get_full_batch(X=X_val, y=y_val)
 

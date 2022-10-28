@@ -7,6 +7,7 @@ from tvsclib.toeplitz_operator import ToeplitzOperator
 from tvsclib.system_identification_svd import SystemIdentificationSVD
 
 from structurednets.layers.layer_helpers import get_random_glorot_uniform_matrix, get_nb_model_parameters
+from structurednets.training_helpers import train_with_decreasing_lr
 
 def get_nb_parameters(optim_mat: np.ndarray, statespace_dim: int, nb_states: int) -> int:
     dims_in, dims_out = standard_dims_in_dims_out_computation(input_size=optim_mat.shape[1], output_size=optim_mat.shape[0], nb_states=nb_states)
@@ -29,8 +30,11 @@ def has_less_parameters_than_allowed(optim_mat: np.ndarray, nb_params_share: flo
     return get_nb_parameters(optim_mat=optim_mat, statespace_dim=state_space_dim, nb_states=nb_states) < int(nb_params_share * optim_mat.size)
     
 class SemiseparableLayer(nn.Module):
-    def __init__(self, input_dim: int, output_dim: int, nb_params_share: float, use_bias=True, initial_weight_matrix=None, initial_bias=None, nb_states=2):
+    def __init__(self, input_dim: int, output_dim: int, nb_params_share: float, use_bias=True, initial_weight_matrix=None, initial_bias=None, nb_states=None):
         super(SemiseparableLayer, self).__init__()
+
+        if nb_states is None:
+            nb_states = int(min(input_dim, output_dim) / 2)
 
         self.input_dim = input_dim
         self.output_dim = output_dim
@@ -128,6 +132,29 @@ def standard_dims_in_dims_out_computation(input_size: int, output_size: int, nb_
     return dims_in, dims_out
 
 if __name__ == "__main__":
+    input_dim = 31
+    output_dim = 20
+    nb_params_share = 0.5
+
+    nb_training_samples = 1000
+    train_input = np.random.uniform(-1, 1, size=(nb_training_samples, input_dim)).astype(np.float32)
+    train_output = np.ones((nb_training_samples, output_dim), dtype=np.float32)
+
+    layer = SemiseparableLayer(input_dim=input_dim, output_dim=output_dim, nb_params_share=nb_params_share)
+    trained_layer, start_train_loss, start_train_accuracy, start_val_loss, start_val_accuracy, train_loss_history, train_accuracy_history, val_loss_history, val_accuracy_history = train_with_decreasing_lr(
+        model=layer, X_train=train_input, y_train=train_output,
+        patience=1, batch_size=nb_training_samples, verbose=False,
+        loss_function_class=torch.nn.MSELoss,
+        min_patience_improvement=1e5 # This makes the model being trained for only few epochs
+    )
+
+    train_input_torch = torch.tensor(train_input).float()
+    pred = trained_layer.forward(train_input_torch).detach().numpy()
+
+    max_error = np.max(np.abs(pred - train_output))
+
+    # ---
+
     input_dim = 51
     output_dim = 40
     initial_weight_matrix = np.random.uniform(-1, 1, size=(output_dim, input_dim))

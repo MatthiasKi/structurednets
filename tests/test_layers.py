@@ -6,6 +6,8 @@ from structurednets.layers.sss_layer import SemiseparableLayer
 from structurednets.layers.lr_layer import LRLayer
 from structurednets.layers.psm_layer import PSMLayer
 from structurednets.layers.layer_helpers import get_nb_model_parameters
+from structurednets.training_helpers import train
+from structurednets.approximators.psm_approximator import PSMApproximator
 
 class LayerTests(TestCase):
     def test_nb_parameters_are_correct(self):
@@ -41,9 +43,38 @@ class LayerTests(TestCase):
             nb_params = get_nb_model_parameters(layer)
             self.assertTrue(nb_params <= max_nb_parameters)
 
-    def test_train_to_zero(self):
-        # TODO add a test for checking that all layers can be trained to learn to output only zeros
-        pass
+    def test_train_improvement(self):
+        input_dim = 31
+        output_dim = 20
+        nb_params_share = 0.5
+
+        nb_training_samples = 1000
+        train_input = np.random.uniform(-1, 1, size=(nb_training_samples, input_dim)).astype(np.float32)
+        train_input_torch = torch.tensor(train_input).float()
+        train_output = np.ones((nb_training_samples, output_dim), dtype=np.float32)
+
+        layers = [
+            LRLayer(input_dim=input_dim, output_dim=output_dim, nb_params_share=nb_params_share),
+            PSMLayer(input_dim=input_dim, output_dim=output_dim, nb_params_share=nb_params_share),
+            SemiseparableLayer(input_dim=input_dim, output_dim=output_dim, nb_params_share=nb_params_share)
+        ]
+
+        for layer in layers:
+            pred = layer.forward(train_input_torch).detach().numpy()
+            max_error_before = np.max(np.abs(train_output - pred))
+
+            # NOTE that the arguments are specifically chosen such that the training only lasts for a few epochs
+            trained_layer, _, _, _, _, _, _, _, _ = train(
+                model=layer, X_train=train_input, y_train=train_output,
+                patience=10, batch_size=nb_training_samples, verbose=False, lr=1e-6, 
+                restore_best_model=False, loss_function_class=torch.nn.MSELoss,
+                min_patience_improvement=1e6, optimizer_class=torch.optim.SGD,
+            )
+
+            pred = trained_layer.forward(train_input_torch).detach().numpy()
+            max_error_after = np.max(np.abs(train_output - pred))
+
+            self.assertTrue(max_error_after < max_error_before, str(layer) + " failed to improve the error")
 
     def test_semiseparable_layer(self):
         nb_samples = 51
@@ -86,3 +117,19 @@ class LayerTests(TestCase):
         sample_target = weight_matrix @ sample_input + bias
         sample_pred = pred[sample_to_investigate]
         self.assertTrue(np.allclose(sample_target, sample_pred, rtol=1e-3, atol=1e-3), "The picked sample prediction should match the target")
+
+    def test_psm_layer(self):
+        input_dim = 50
+        output_dim = 50
+
+        random_mat = np.random.uniform(-1, 1, size=(50, 50)).astype(np.float32)
+        approximator = PSMApproximator(nb_matrices=2, linear_nb_nonzero_elements_distribution=True)
+        res_dict = approximator.approximate(optim_mat=random_mat, nb_params_share=0.2, num_interpolation_steps=3)
+
+        random_input = np.random.uniform(-1, 1, size=(100, 50)).astype(np.float32)
+        target_output = (res_dict["approx_mat_dense"] @ random_input.T).T
+
+        layer = PSMLayer(input_dim=input_dim, output_dim=output_dim, use_bias=False, sparse_matrices=res_dict["faust_approximation"])
+        pred_output = layer.forward(torch.tensor(random_input)).detach().numpy()
+
+        self.assertTrue(np.allclose(pred_output, target_output, atol=1e-5, rtol=1e-5))
