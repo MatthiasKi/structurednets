@@ -10,39 +10,34 @@ from structurednets.training_helpers import train
 from structurednets.approximators.psm_approximator import PSMApproximator
 from structurednets.layers.ldr_layer import LDRLayer
 
+def get_test_layer_classes(add_layers_requiring_square_weight_matrices=True) -> list:
+    res = [
+        LRLayer,
+        PSMLayer,
+        SemiseparableLayer,
+    ]
+    if add_layers_requiring_square_weight_matrices:
+        res.append(LDRLayer)
+    return res
+
 class LayerTests(TestCase):
     def test_nb_parameters_are_correct(self):
         input_dim = 31
         output_dim = 20
         initial_weight_matrix = np.random.uniform(-1, 1, size=(output_dim, input_dim))
 
+        layer_classes = get_test_layer_classes(add_layers_requiring_square_weight_matrices=False)
         nb_param_shares = np.linspace(0.1, 0.9, num=3)
         for nb_param_share in nb_param_shares:
             max_nb_parameters = int(nb_param_share * input_dim * output_dim)
+            for layer_class in layer_classes:
+                layer_from_scratch = layer_class(input_dim=input_dim, output_dim=output_dim, use_bias=False, nb_params_share=nb_param_share)
+                nb_params = get_nb_model_parameters(layer_from_scratch)
+                self.assertTrue(nb_params <= max_nb_parameters, "Layer " + str(layer_class) + " has too many parameters when building from scratch")
 
-            layer = LRLayer(input_dim=input_dim, output_dim=output_dim, use_bias=False, nb_params_share=nb_param_share)
-            nb_params = get_nb_model_parameters(layer)
-            self.assertTrue(nb_params <= max_nb_parameters)
-
-            layer = LRLayer(input_dim=input_dim, output_dim=output_dim, use_bias=False, nb_params_share=nb_param_share, initial_weight_matrix=initial_weight_matrix)
-            nb_params = get_nb_model_parameters(layer)
-            self.assertTrue(nb_params <= max_nb_parameters)
-
-            layer = PSMLayer(input_dim=input_dim, output_dim=output_dim, use_bias=False, nb_params_share=nb_param_share)
-            nb_params = get_nb_model_parameters(layer)
-            self.assertTrue(nb_params <= max_nb_parameters)
-
-            layer = PSMLayer(input_dim=input_dim, output_dim=output_dim, use_bias=False, nb_params_share=nb_param_share, initial_weight_matrix=initial_weight_matrix)
-            nb_params = get_nb_model_parameters(layer)
-            self.assertTrue(nb_params <= max_nb_parameters)
-
-            layer = SemiseparableLayer(input_dim=input_dim, output_dim=output_dim, use_bias=False, nb_params_share=nb_param_share)
-            nb_params = get_nb_model_parameters(layer)
-            self.assertTrue(nb_params <= max_nb_parameters)
-
-            layer = SemiseparableLayer(input_dim=input_dim, output_dim=output_dim, use_bias=False, nb_params_share=nb_param_share, initial_weight_matrix=initial_weight_matrix)
-            nb_params = get_nb_model_parameters(layer)
-            self.assertTrue(nb_params <= max_nb_parameters)
+                layer_from_initial_weight_matrix = layer_class(input_dim=input_dim, output_dim=output_dim, use_bias=False, nb_params_share=nb_param_share, initial_weight_matrix=initial_weight_matrix)
+                nb_params = get_nb_model_parameters(layer_from_initial_weight_matrix)
+                self.assertTrue(nb_params <= max_nb_parameters, "Layer " + str(layer_class) + " has too many parameters when initializing from given weight matrix")
 
         # NOTE: we adapted the test for LDR matrices, because currently they are only implemented for square matrices
         input_dim = 20
@@ -63,15 +58,11 @@ class LayerTests(TestCase):
         input_dim = 30
         output_dim = 30
 
+        layer_classes = get_test_layer_classes()
         nb_param_shares = np.linspace(0.1, 0.9, num=3)
         for nb_param_share in nb_param_shares:
-            layers = [
-                LRLayer(input_dim=input_dim, output_dim=output_dim, nb_params_share=nb_param_share, use_bias=True),
-                PSMLayer(input_dim=input_dim, output_dim=output_dim, nb_params_share=nb_param_share, use_bias=True),
-                SemiseparableLayer(input_dim=input_dim, output_dim=output_dim, nb_params_share=nb_param_share, use_bias=True),
-                LDRLayer(input_dim=input_dim, output_dim=output_dim, nb_params_share=nb_param_share, use_bias=True)
-            ]
-            for layer in layers:
+            for layer_class in layer_classes:
+                layer = layer_class(input_dim=input_dim, output_dim=output_dim, nb_params_share=nb_param_share, use_bias=True)
                 nb_params = get_nb_model_parameters(layer)
                 nb_params_from_function = layer.get_nb_parameters()
                 self.assertTrue(nb_params == nb_params_from_function, "The nuber of parameters do not match the value returned by the number of parameters function for the " + str(layer) + " layer")
@@ -86,14 +77,10 @@ class LayerTests(TestCase):
         train_input_torch = torch.tensor(train_input).float()
         train_output = np.ones((nb_training_samples, output_dim), dtype=np.float32)
 
-        layers = [
-            LRLayer(input_dim=input_dim, output_dim=output_dim, nb_params_share=nb_params_share),
-            PSMLayer(input_dim=input_dim, output_dim=output_dim, nb_params_share=nb_params_share),
-            SemiseparableLayer(input_dim=input_dim, output_dim=output_dim, nb_params_share=nb_params_share),
-            LDRLayer(input_dim=input_dim, output_dim=output_dim, nb_params_share=nb_params_share)
-        ]
+        layer_classes = get_test_layer_classes()
+        for layer_class in layer_classes:
+            layer = layer_class(input_dim=input_dim, output_dim=output_dim, nb_params_share=nb_params_share)
 
-        for layer in layers:
             pred = layer.forward(train_input_torch).detach().numpy()
             max_error_before = np.max(np.abs(train_output - pred))
 
