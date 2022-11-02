@@ -59,6 +59,23 @@ class LayerTests(TestCase):
             nb_params = get_nb_model_parameters(layer)
             self.assertTrue(nb_params <= max_nb_parameters)
 
+    def tes_nb_parameters_function_returns_correct_value(self):
+        input_dim = 30
+        output_dim = 30
+
+        nb_param_shares = np.linspace(0.1, 0.9, num=3)
+        for nb_param_share in nb_param_shares:
+            layers = [
+                LRLayer(input_dim=input_dim, output_dim=output_dim, nb_params_share=nb_param_share, use_bias=True),
+                PSMLayer(input_dim=input_dim, output_dim=output_dim, nb_params_share=nb_param_share, use_bias=True),
+                SemiseparableLayer(input_dim=input_dim, output_dim=output_dim, nb_params_share=nb_param_share, use_bias=True),
+                LDRLayer(input_dim=input_dim, output_dim=output_dim, nb_params_share=nb_param_share, use_bias=True)
+            ]
+            for layer in layers:
+                nb_params = get_nb_model_parameters(layer)
+                nb_params_from_function = layer.get_nb_parameters()
+                self.assertTrue(nb_params == nb_params_from_function, "The nuber of parameters do not match the value returned by the number of parameters function for the " + str(layer) + " layer")
+            
     def test_train_improvement(self):
         input_dim = 20
         output_dim = 20
