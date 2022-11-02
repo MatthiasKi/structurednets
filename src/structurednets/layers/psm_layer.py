@@ -8,25 +8,16 @@ from structurednets.approximators.psm_approximator_wrapper import PSMApproximato
 from structurednets.layers.layer_helpers import get_nb_model_parameters
 from structurednets.training_helpers import train, train_with_decreasing_lr
 from structurednets.approximators.psm_approximator import PSMApproximator
+from structurednets.layers.structured_layer import StructuredLayer
 
-class PSMLayer(nn.Module):
+class PSMLayer(StructuredLayer):
     # NOTE: Since this model contains sparse weight matrices, it can only be trained with SGD (particularly no Adam). 
     # Consider using the train_with_decreasing_lr instead of just train, since decreasing the learning rate might result in better results
     def __init__(self, input_dim: int, output_dim: int, use_bias=True, nb_params_share=None, initial_weight_matrix=None, initial_bias=None, sparse_matrices=None):
-        super(PSMLayer, self).__init__()
-        
-        self.use_bias = use_bias
-        if self.use_bias:
-            if initial_bias is not None:
-                self.bias = torch.tensor(initial_bias)
-            else:
-                self.bias = torch.tensor(get_random_glorot_uniform_matrix((output_dim,)))
-            self.bias = nn.Parameter(self.bias)
-        else:
-            self.bias = None
-
+        super(PSMLayer, self).__init__(input_dim=input_dim, output_dim=output_dim, nb_params_share=nb_params_share, use_bias=use_bias, initial_weight_matrix=initial_weight_matrix, initial_bias=initial_bias)
         assert nb_params_share is not None or sparse_matrices is not None, "Need to pass the nb_params_share or an initial sparse matrices configuration"
         assert sparse_matrices is None or initial_weight_matrix is None, "Can either pass an initial weight matrix or an initial sparse matrices configuration"
+        
         if sparse_matrices is None:
             if initial_weight_matrix is None:
                 initial_weight_matrix = get_random_glorot_uniform_matrix((output_dim, input_dim))

@@ -8,9 +8,10 @@ from tvsclib.system_identification_svd import SystemIdentificationSVD
 
 from structurednets.layers.layer_helpers import get_random_glorot_uniform_matrix, get_nb_model_parameters
 from structurednets.training_helpers import train_with_decreasing_lr
+from structurednets.layers.structured_layer import StructuredLayer
 
-def get_nb_parameters(optim_mat: np.ndarray, statespace_dim: int, nb_states: int) -> int:
-    dims_in, dims_out = standard_dims_in_dims_out_computation(input_size=optim_mat.shape[1], output_size=optim_mat.shape[0], nb_states=nb_states)
+def get_nb_parameters(optim_mat_shape: tuple, statespace_dim: int, nb_states: int) -> int:
+    dims_in, dims_out = standard_dims_in_dims_out_computation(input_size=optim_mat_shape[1], output_size=optim_mat_shape[0], nb_states=nb_states)
     nb_params = 0
     for state_i, (inp_dim, out_dim) in enumerate(zip(dims_in, dims_out)):
         if state_i > 0 and state_i < len(dims_in) - 1:
@@ -27,27 +28,22 @@ def get_max_statespace_dim(optim_mat: np.ndarray, nb_params_share: float, nb_sta
     return state_space_dim
 
 def has_less_parameters_than_allowed(optim_mat: np.ndarray, nb_params_share: float, nb_states: int, state_space_dim: int) -> bool:
-    return get_nb_parameters(optim_mat=optim_mat, statespace_dim=state_space_dim, nb_states=nb_states) < int(nb_params_share * optim_mat.size)
+    return get_nb_parameters(optim_mat_shape=optim_mat.shape, statespace_dim=state_space_dim, nb_states=nb_states) < int(nb_params_share * optim_mat.size)
     
-class SemiseparableLayer(nn.Module):
+class SemiseparableLayer(StructuredLayer):
     def __init__(self, input_dim: int, output_dim: int, nb_params_share: float, use_bias=True, initial_weight_matrix=None, initial_bias=None, nb_states=None):
-        super(SemiseparableLayer, self).__init__()
+        super(SemiseparableLayer, self).__init__(input_dim=input_dim, output_dim=output_dim, nb_params_share=nb_params_share, use_bias=use_bias, initial_weight_matrix=initial_weight_matrix, initial_bias=initial_bias)
 
         if nb_states is None:
             nb_states = int(min(input_dim, output_dim) / 2)
+        assert nb_states > 0, "Nb states must be positive"
 
         self.input_dim = input_dim
-        self.output_dim = output_dim
         self.nb_states = nb_states
-        self.use_bias = use_bias
 
-        assert self.nb_states > 0, "Nb states must be positive"
-        assert self.input_dim > 0, "Input dim must be positive"
-        assert self.output_dim > 0, "Output dim must be positive"
+        self.init_state_matrices(nb_params_share=nb_params_share, initial_weight_matrix=initial_weight_matrix)
 
-        self.init_state_matrices(nb_params_share=nb_params_share, initial_weight_matrix=initial_weight_matrix, initial_bias=initial_bias)
-
-    def init_state_matrices(self, nb_params_share: float, initial_weight_matrix=None, initial_bias=None):
+    def init_state_matrices(self, nb_params_share: float, initial_weight_matrix=None):
         if initial_weight_matrix is None:
             T_full = get_random_glorot_uniform_matrix(shape=(self.output_dim, self.input_dim))
         else:
@@ -79,14 +75,6 @@ class SemiseparableLayer(nn.Module):
             self.F = nn.ParameterList([nn.Parameter(torch.tensor(F_k).float(), requires_grad=True) for F_k in F])
             self.G = nn.ParameterList([nn.Parameter(torch.tensor(G_k).float(), requires_grad=True) for G_k in G])
 
-            if self.use_bias:
-                if initial_bias is None:
-                    self.bias = nn.parameter.Parameter(torch.tensor(get_random_glorot_uniform_matrix((self.output_dim,))).float(), requires_grad=True)
-                else:
-                    self.bias = nn.parameter.Parameter(torch.tensor(initial_bias), requires_grad=True)
-            else:
-                self.bias = None
-
             self.state_matrices_initialized = True
 
     def get_input_index_range_according_to_state(self, state_i):
@@ -96,9 +84,9 @@ class SemiseparableLayer(nn.Module):
         return range(np.sum(self.dims_out[:state_i]), np.sum(self.dims_out[:state_i+1]))
 
     def forward(self, U):
-        y_pred = torch.zeros((self.output_dim, U.shape[0]))
-
         if hasattr(self, "state_matrices_initialized") and self.state_matrices_initialized:
+            y_pred = torch.zeros((self.output_dim, U.shape[0]))
+
             causal_state = torch.zeros((0, U.shape[0]))
             anticausal_state = torch.zeros((0, U.shape[0]))
 
@@ -120,7 +108,15 @@ class SemiseparableLayer(nn.Module):
             if self.use_bias:
                 y_pred += self.bias
 
-        return y_pred
+            return y_pred
+        else:
+            return torch.zeros((U.shape[0], self.output_dim))
+
+    def get_nb_parameters(self) -> int:
+        if hasattr(self, "state_matrices_initialized") and self.state_matrices_initialized:
+            return get_nb_parameters(optim_mat_shape=(self.output_dim, self.input_dim), statespace_dim=self.statespace_dim, nb_states=self.nb_states)
+        else:
+            return 0
 
 def standard_dims_in_dims_out_computation(input_size: int, output_size: int, nb_states: int):
     dims_in = int(input_size / nb_states) * np.ones((nb_states,), dtype='int32')
