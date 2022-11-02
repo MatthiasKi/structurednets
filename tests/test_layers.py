@@ -8,6 +8,7 @@ from structurednets.layers.psm_layer import PSMLayer
 from structurednets.layers.layer_helpers import get_nb_model_parameters
 from structurednets.training_helpers import train
 from structurednets.approximators.psm_approximator import PSMApproximator
+from structurednets.layers.ldr_layer import LDRLayer
 
 class LayerTests(TestCase):
     def test_nb_parameters_are_correct(self):
@@ -35,16 +36,31 @@ class LayerTests(TestCase):
             nb_params = get_nb_model_parameters(layer)
             self.assertTrue(nb_params <= max_nb_parameters)
 
-            layer = SemiseparableLayer(input_dim=input_dim, output_dim=output_dim, use_bias=False, nb_params_share=nb_param_share, nb_states=5)
+            layer = SemiseparableLayer(input_dim=input_dim, output_dim=output_dim, use_bias=False, nb_params_share=nb_param_share)
             nb_params = get_nb_model_parameters(layer)
             self.assertTrue(nb_params <= max_nb_parameters)
 
-            layer = SemiseparableLayer(input_dim=input_dim, output_dim=output_dim, use_bias=False, nb_params_share=nb_param_share, initial_weight_matrix=initial_weight_matrix, nb_states=5)
+            layer = SemiseparableLayer(input_dim=input_dim, output_dim=output_dim, use_bias=False, nb_params_share=nb_param_share, initial_weight_matrix=initial_weight_matrix)
+            nb_params = get_nb_model_parameters(layer)
+            self.assertTrue(nb_params <= max_nb_parameters)
+
+        # NOTE: we adapted the test for LDR matrices, because currently they are only implemented for square matrices
+        input_dim = 20
+        output_dim = 20
+        initial_weight_matrix = np.random.uniform(-1, 1, size=(output_dim, input_dim))
+
+        nb_param_shares = np.linspace(0.1, 0.9, num=3)
+        for nb_param_share in nb_param_shares:
+            layer = LDRLayer(input_dim=input_dim, output_dim=output_dim, use_bias=False, nb_params_share=nb_param_share)
+            nb_params = get_nb_model_parameters(layer)
+            self.assertTrue(nb_params <= max_nb_parameters)
+
+            layer = LDRLayer(input_dim=input_dim, output_dim=output_dim, use_bias=False, nb_params_share=nb_param_share, initial_weight_matrix=initial_weight_matrix)
             nb_params = get_nb_model_parameters(layer)
             self.assertTrue(nb_params <= max_nb_parameters)
 
     def test_train_improvement(self):
-        input_dim = 31
+        input_dim = 20
         output_dim = 20
         nb_params_share = 0.5
 
@@ -56,7 +72,8 @@ class LayerTests(TestCase):
         layers = [
             LRLayer(input_dim=input_dim, output_dim=output_dim, nb_params_share=nb_params_share),
             PSMLayer(input_dim=input_dim, output_dim=output_dim, nb_params_share=nb_params_share),
-            SemiseparableLayer(input_dim=input_dim, output_dim=output_dim, nb_params_share=nb_params_share)
+            SemiseparableLayer(input_dim=input_dim, output_dim=output_dim, nb_params_share=nb_params_share),
+            LDRLayer(input_dim=input_dim, output_dim=output_dim, nb_params_share=nb_params_share)
         ]
 
         for layer in layers:

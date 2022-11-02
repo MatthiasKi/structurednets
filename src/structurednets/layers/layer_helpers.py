@@ -2,6 +2,11 @@ import torch
 import torch.nn as nn
 import numpy as np
 
+def get_random_glorot_uniform_matrix_torch(shape: tuple) -> torch.tensor:
+    curr_mat = torch.tensor(get_random_glorot_uniform_matrix(shape=shape))
+    curr_mat.requires_grad_()
+    return curr_mat
+    
 def get_random_glorot_uniform_matrix(shape: tuple) -> np.ndarray:
     limit = np.sqrt(6 / sum(shape))
     return np.random.uniform(-limit, limit, size=shape)

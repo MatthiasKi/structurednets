@@ -3,7 +3,49 @@ import torch
 import copy
 
 from structurednets.approximators.approximator import Approximator
+from structurednets.layers.layer_helpers import get_random_glorot_uniform_matrix_torch
 
+def get_max_ld_rank_wrt_max_nb_free_parameters(max_nb_free_parameters: int, target_shape_mat: tuple):
+    n = min(target_shape_mat)
+    return int((max_nb_free_parameters - 2*(3*n - 2) + 4) / (2*n))
+
+def get_nb_free_parameters( displacement_rank: int, target_mat_shape: tuple):
+    n = min(target_mat_shape)
+    return displacement_rank * 2 * n + 2 * (3*n - 2) + 4
+
+def get_init_tridiagonal_matrix_with_corners_torch( shape: tuple):
+    assert shape[0] == shape[1], "get_init_tridiagonal_matrix is only defined for square matrix shapes"
+    tmp = np.expand_dims(np.arange(shape[0]), 1)
+    upper_diagonal_indices = np.concatenate((tmp[1:]-1, tmp[1:]), axis=1)
+    lower_diagonal_indices = np.concatenate((tmp[:-1]+1, tmp[:-1]), axis=1)
+    diagonal_indices = np.concatenate((tmp, tmp), axis=1)
+    corner_indices = np.array([[0, shape[0] - 1], [shape[0] - 1, 0]])
+    tridiagonal_indices = np.concatenate((upper_diagonal_indices, lower_diagonal_indices, diagonal_indices, corner_indices), axis=0)
+    glorot_std = np.sqrt(6.0 / (shape[0] + shape[1]))
+    curr_mat = torch.sparse_coo_tensor([tridiagonal_indices[:,0], tridiagonal_indices[:,1]], np.random.uniform(-glorot_std, glorot_std, size=(3*shape[0],)), shape)
+    curr_mat.requires_grad_()
+    return curr_mat
+
+def build_weight_matrix_torch(representation_matrices: list, target_mat_shape: tuple):
+    # NOTE: We assume that the first entry in the list is A, the second B, the third G and the last H
+    res = torch.zeros(target_mat_shape)
+
+    for i in range(representation_matrices[2].shape[1]):
+        krylov_a_gi = torch.cat([torch.index_select(representation_matrices[2], 1, torch.LongTensor([i]))] + [torch.matmul(torch.matrix_power(representation_matrices[0].to_dense(), j), torch.index_select(representation_matrices[2], 1, torch.LongTensor([i]))) for j in range(1, target_mat_shape[0])], 1)
+        krylov_bT_h_i = torch.cat([torch.index_select(representation_matrices[3], 1, torch.LongTensor([i]))] + [torch.matmul(torch.matrix_power(torch.transpose(representation_matrices[1].to_dense(), 0, 1), j), torch.index_select(representation_matrices[3], 1, torch.LongTensor([i]))) for j in range(1, target_mat_shape[0])], 1)
+
+        res += torch.matmul(krylov_a_gi, krylov_bT_h_i.T)
+
+    return res
+
+def init_representation_matrices_torch(shape: tuple, displacement_rank: int):
+    return [
+        get_init_tridiagonal_matrix_with_corners_torch(shape), # A
+        get_init_tridiagonal_matrix_with_corners_torch(shape), # B
+        get_random_glorot_uniform_matrix_torch((shape[0], displacement_rank)), # G
+        get_random_glorot_uniform_matrix_torch((shape[0], displacement_rank)), # H
+    ]
+    
 class LDRApproximator(Approximator):
     def __init__(self, norm="fro"):
         self.possible_special_norms = ["nuc", "fro"]
@@ -16,47 +58,6 @@ class LDRApproximator(Approximator):
         name = "LDRApproximator_" + str(self.norm)
         return name
 
-    def get_max_ld_rank_wrt_max_nb_free_parameters(self, max_nb_free_parameters: int, target_shape_mat: tuple):
-        n = min(target_shape_mat)
-        return int((max_nb_free_parameters - 2*(3*n - 2) + 4) / (2*n))
-
-    def get_nb_free_parameters(self, displacement_rank: int, target_mat_shape: tuple):
-        n = min(target_mat_shape)
-        return displacement_rank * 2 * n + 2 * (3*n - 2) + 4
-
-    def get_init_tridiagonal_matrix_with_corners_torch(self, shape: tuple):
-        assert shape[0] == shape[1], "get_init_tridiagonal_matrix is only defined for square matrix shapes"
-        tmp = np.expand_dims(np.arange(shape[0]), 1)
-        upper_diagonal_indices = np.concatenate((tmp[1:]-1, tmp[1:]), axis=1)
-        lower_diagonal_indices = np.concatenate((tmp[:-1]+1, tmp[:-1]), axis=1)
-        diagonal_indices = np.concatenate((tmp, tmp), axis=1)
-        corner_indices = np.array([[0, shape[0] - 1], [shape[0] - 1, 0]])
-        tridiagonal_indices = np.concatenate((upper_diagonal_indices, lower_diagonal_indices, diagonal_indices, corner_indices), axis=0)
-        glorot_std = np.sqrt(6.0 / (shape[0] + shape[1]))
-        curr_mat = torch.sparse_coo_tensor([tridiagonal_indices[:,0], tridiagonal_indices[:,1]], np.random.uniform(-glorot_std, glorot_std, size=(3*shape[0],)), shape)
-        curr_mat.requires_grad_()
-        return curr_mat
-
-    def build_weight_matrix_torch(self, representation_matrices: list, target_mat_shape: tuple):
-        # NOTE: We assume that the first entry in the list is A, the second B, the third G and the last H
-        res = torch.zeros(target_mat_shape)
-
-        for i in range(representation_matrices[2].shape[1]):
-            krylov_a_gi = torch.cat([torch.index_select(representation_matrices[2], 1, torch.LongTensor([i]))] + [torch.matmul(torch.matrix_power(representation_matrices[0].to_dense(), j), torch.index_select(representation_matrices[2], 1, torch.LongTensor([i]))) for j in range(1, target_mat_shape[0])], 1)
-            krylov_bT_h_i = torch.cat([torch.index_select(representation_matrices[3], 1, torch.LongTensor([i]))] + [torch.matmul(torch.matrix_power(torch.transpose(representation_matrices[1].to_dense(), 0, 1), j), torch.index_select(representation_matrices[3], 1, torch.LongTensor([i]))) for j in range(1, target_mat_shape[0])], 1)
-
-            res += torch.matmul(krylov_a_gi, krylov_bT_h_i.T)
-
-        return res
-
-    def init_representation_matrices_torch(self, weights: np.ndarray, displacement_rank: int):
-        return [
-            self.get_init_tridiagonal_matrix_with_corners_torch(weights.shape), # A
-            self.get_init_tridiagonal_matrix_with_corners_torch(weights.shape), # B
-            self.get_init_random_matrix_torch((weights.shape[0], displacement_rank)), # G
-            self.get_init_random_matrix_torch((weights.shape[0], displacement_rank)), # H
-        ]
-
     def approximate(self, optim_mat: np.ndarray, nb_params_share: float):
         assert len(optim_mat.shape) == 2, "Can only handle matrices for LDR approximation"
 
@@ -68,9 +69,9 @@ class LDRApproximator(Approximator):
         # This approach does only work for square matrices
         if optim_mat.shape[0] == optim_mat.shape[1]:
             max_nb_free_parameters = int(optim_mat.size * nb_params_share)
-            displacement_rank = self.get_max_ld_rank_wrt_max_nb_free_parameters(max_nb_free_parameters=max_nb_free_parameters, target_shape_mat=optim_mat.shape)
+            displacement_rank = get_max_ld_rank_wrt_max_nb_free_parameters(max_nb_free_parameters=max_nb_free_parameters, target_shape_mat=optim_mat.shape)
             if displacement_rank > 0:
-                nb_parameters = self.get_nb_free_parameters(displacement_rank, optim_mat.shape)
+                nb_parameters = get_nb_free_parameters(displacement_rank, optim_mat.shape)
 
                 # We repeat the optimization 5 times to account for random initialization effects
                 for _ in range(5):
@@ -89,23 +90,8 @@ class LDRApproximator(Approximator):
         res_dict["nb_parameters"] = nb_parameters
         return res_dict
 
-    def get_glorot_std(self, shape: tuple):
-        if len(shape) == 2:
-            glorot_std = np.sqrt(6.0 / (shape[0] + shape[1]))
-        elif len(shape) == 1:
-            glorot_std = np.sqrt(6.0 / shape[0])
-        else:
-            raise Exception("Shape length mismatch: " + str(len(shape)))
-        return glorot_std
-
-    def get_init_random_matrix_torch(self, shape: tuple):
-        glorot_std = self.get_glorot_std(shape)
-        curr_mat = torch.tensor(np.random.uniform(-glorot_std, glorot_std, size=shape))
-        curr_mat.requires_grad_()
-        return curr_mat
-
     def ldr_approx_loss_torch(self, representation_matrices: list, target_mat: np.ndarray):
-        curr_mat = self.build_weight_matrix_torch(representation_matrices, target_mat.shape)
+        curr_mat = build_weight_matrix_torch(representation_matrices, target_mat.shape)
         return torch.norm(torch.tensor(target_mat) - curr_mat, p=self.norm)
 
     def square_mat_ldr_approximation_torch_with_lr(self, representation_matrices: list, weights: np.ndarray, lr: float, min_optimization_epsilon=1e-5, verbose=False):
@@ -136,7 +122,7 @@ class LDRApproximator(Approximator):
     def square_mat_ldr_approximation_torch(self, weights: np.ndarray, displacement_rank: int, min_optimization_epsilon=1e-3, verbose=False):
         assert weights.shape[0] == weights.shape[1], "square_mat_ldr_approximation is only defined for square matrices"
 
-        representation_matrices = self.init_representation_matrices_torch(weights=weights, displacement_rank=displacement_rank)
+        representation_matrices = init_representation_matrices_torch(shape=weights.shape, displacement_rank=displacement_rank)
 
         # Perform the optimization
         # NOTE there is the potential to run into numerical problems - then we return fresh initialized representation matrices (i.e. representation matrices which will perform pretty bad)
@@ -148,9 +134,9 @@ class LDRApproximator(Approximator):
             # And again smaller
             representation_matrices = self.square_mat_ldr_approximation_torch_with_lr(representation_matrices=representation_matrices, weights=weights, lr=1e-2, min_optimization_epsilon=min_optimization_epsilon, verbose=verbose)
         except:
-            representation_matrices = self.init_representation_matrices_torch(weights=weights, displacement_rank=displacement_rank)
+            representation_matrices = init_representation_matrices_torch(shape=weights.shape, displacement_rank=displacement_rank)
 
-        return representation_matrices, self.build_weight_matrix_torch(representation_matrices=representation_matrices, target_mat_shape=weights.shape).detach().numpy()
+        return representation_matrices, build_weight_matrix_torch(representation_matrices=representation_matrices, target_mat_shape=weights.shape).detach().numpy()
 
 if __name__ == "__main__":
     # Test case
