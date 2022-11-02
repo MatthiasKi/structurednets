@@ -51,7 +51,7 @@ class BlockClusterTree:
     def get_all_hmatrix_components(self):
         return self.root.get_all_hmatrix_components()
 
-    def get_nb_params(self):
+    def get_nb_params(self) -> int:
         return self.root.get_nb_params()
 
     def get_all_elements_where_parameters_can_be_added(self, max_nb_parameters: int):

@@ -1,5 +1,6 @@
 import torch
 import numpy as np
+import pickle
 
 from structurednets.hmatrix.block_cluster_tree import BlockClusterTree
 
@@ -24,6 +25,12 @@ class HMatrix:
 
     def get_curr_error(self, optim_mat: np.ndarray):
         return np.linalg.norm(optim_mat - self.to_dense_numpy(), ord="fro")
+
+    def get_nb_params(self) -> int:
+        return self.block_cluster_tree.get_nb_params()
+    
+    def get_all_hmatrix_components(self) -> list:
+        return self.block_cluster_tree.get_all_hmatrix_components()
 
     def find_best_leaf_approximation(self, optim_mat: np.ndarray, nb_params_share: float):
         self.shape = optim_mat.shape
@@ -56,9 +63,5 @@ class HMatrix:
     def clear_full_rank_parts_and_cached_values(self):
         self.block_cluster_tree.clear_full_rank_parts_and_cached_values()
 
-    def dot(self, vec: torch.tensor) -> torch.tensor:
-        assert hasattr(self, "shape"), "The approximation must be performed before calling dot()"
-        assert len(vec.shape) == 1 or vec.shape[0] == 1 or vec.shape[1] == 1, "dot is only implemented for vectors"
-
-        # TODO implement this
-        pass
+    def clone(self):
+        return pickle.loads(pickle.dumps(self))

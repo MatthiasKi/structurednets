@@ -1,11 +1,12 @@
-from re import S
 from unittest import TestCase
 import numpy as np
+import torch
 
 from structurednets.hmatrix.block_cluster_tree import BlockClusterTree
 from structurednets.hmatrix.tree_element import TreeElement
 from structurednets.hmatrix.hmatrix_component import HMatrixComponent
 from structurednets.approximators.hodlr_approximator import build_hodlr_block_cluster_tree
+from structurednets.approximators.hmat_approximator import HMatApproximator
 
 class HMatrixFrameWorkTests(TestCase):
     def test_block_cluster_tree_with_single_element(self):
@@ -69,8 +70,8 @@ class HMatrixFrameWorkTests(TestCase):
         component.add_singular_value_to_approximation()
         component.add_singular_value_to_approximation()
         component.remove_singular_value_from_approximation()
-        self.assertTrue(np.allclose(one_column_left_component, component.left_lr))
-        self.assertTrue(np.allclose(one_row_right_component, component.right_lr))
+        self.assertTrue(np.allclose(one_column_left_component, component.left_lr.detach().numpy()))
+        self.assertTrue(np.allclose(one_row_right_component, component.right_lr.detach().numpy()))
 
         component.remove_singular_value_from_approximation()
         self.assertTrue(component.left_lr is None and component.right_lr is None)

@@ -1,12 +1,24 @@
 import torch
+import torch.nn as nn
 import numpy as np
 
-class HMatrixComponent:
+class HMatrixComponent(nn.Module):
     def __init__(self, row_range: range, col_range: range, left_lr: torch.tensor, right_lr: torch.tensor):
+        super(HMatrixComponent, self).__init__()
+
         self.row_range = row_range
         self.col_range = col_range
-        self.left_lr = left_lr
-        self.right_lr = right_lr
+        self.set_nn_parameters(left_lr=left_lr, right_lr=right_lr)
+
+    def set_nn_parameters(self, left_lr: torch.tensor, right_lr: torch.tensor):
+        if left_lr is not None and right_lr is not None:
+            left_lr.requires_grad_()
+            right_lr.requires_grad_()
+            self.left_lr = nn.Parameter(left_lr)
+            self.right_lr = nn.Parameter(right_lr)
+        else:
+            self.left_lr = None
+            self.right_lr = None
 
     def are_low_rank_components_set(self):
         return self.left_lr is not None \
@@ -80,19 +92,23 @@ class HMatrixComponent:
         assert self.do_low_rank_component_shapes_match(), "Mismatch between the low rank components"
         
         nb_singular_values = self.get_current_nb_singular_values() + 1        
-        self.left_lr = self.left_full_component[:, :nb_singular_values]
-        self.right_lr = self.right_full_component[:nb_singular_values, :]
+        updated_left_lr = self.left_full_component[:, :nb_singular_values]
+        updated_right_lr = self.right_full_component[:nb_singular_values, :]
+
+        self.set_nn_parameters(left_lr=updated_left_lr, right_lr=updated_right_lr)
 
     def remove_singular_value_from_approximation(self):
         assert self.left_lr.shape[1] > 0 and self.right_lr.shape[0] > 0, "Can only remove singular values if there is at least one singular value in use"
         assert self.do_low_rank_component_shapes_match(), "Mismatch between the low rank components"
         
         if self.left_lr.shape[1] == 1:
-            self.left_lr = None
-            self.right_lr = None
+            updated_left_lr = None
+            update_right_lr = None
         else:
-            self.left_lr = self.left_lr[:, :-1]
-            self.right_lr = self.right_lr[:-1, :]
+            updated_left_lr = self.left_lr[:, :-1]
+            update_right_lr = self.right_lr[:-1, :]
+        
+        self.set_nn_parameters(left_lr=updated_left_lr, right_lr=update_right_lr)
 
     def get_curr_local_error(self, optim_mat: np.ndarray) -> float:
         optim_mat_part = optim_mat[self.row_range.start:self.row_range.stop, self.col_range.start:self.col_range.stop]

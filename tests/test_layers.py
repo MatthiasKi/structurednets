@@ -9,12 +9,14 @@ from structurednets.layers.layer_helpers import get_nb_model_parameters
 from structurednets.training_helpers import train
 from structurednets.approximators.psm_approximator import PSMApproximator
 from structurednets.layers.ldr_layer import LDRLayer
+from structurednets.layers.hmat_layer import HMatLayer
 
 def get_test_layer_classes(add_layers_requiring_square_weight_matrices=True) -> list:
     res = [
         LRLayer,
         PSMLayer,
         SemiseparableLayer,
+        HMatLayer,
     ]
     if add_layers_requiring_square_weight_matrices:
         res.append(LDRLayer)
@@ -87,7 +89,7 @@ class LayerTests(TestCase):
             # NOTE that the arguments are specifically chosen such that the training only lasts for a few epochs
             trained_layer, _, _, _, _, _, _, _, _ = train(
                 model=layer, X_train=train_input, y_train=train_output,
-                patience=10, batch_size=nb_training_samples, verbose=False, lr=1e-6, 
+                patience=10, batch_size=nb_training_samples, verbose=False, lr=1e-3, 
                 restore_best_model=False, loss_function_class=torch.nn.MSELoss,
                 min_patience_improvement=1e6, optimizer_class=torch.optim.SGD,
             )
