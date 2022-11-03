@@ -5,7 +5,7 @@ In this folder, we provide neural network layers with structured weight matrices
 ## Layers: Overview
 
 There are layers for the following classes of structured matrices:
-- Sequentially Semiseparable Matrices: SemiseparableLayer (`sss_layer.py`)
+- Sequentially Semiseparable Matrices: SSSLayer
 - Low Rank Matrices: LRLayer
 - Matrices of Low Displacement Rank (in particular: LDR matrices with tridiagonal plus corder operator matrices): LDRLayer
 - Hierarchical Matrices: HMatLayer

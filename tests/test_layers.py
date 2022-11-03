@@ -2,7 +2,7 @@ from unittest import TestCase
 import numpy as np
 import torch
 
-from structurednets.layers.sss_layer import SemiseparableLayer
+from structurednets.layers.sss_layer import SSSLayer
 from structurednets.layers.lr_layer import LRLayer
 from structurednets.layers.psm_layer import PSMLayer
 from structurednets.layers.ldr_layer import LDRLayer
@@ -19,7 +19,7 @@ def get_test_layer_classes(add_layers_requiring_square_weight_matrices=True) -> 
     res = [
         LRLayer,
         PSMLayer,
-        SemiseparableLayer,
+        SSSLayer,
         HMatLayer,
     ]
     if add_layers_requiring_square_weight_matrices:
@@ -103,7 +103,7 @@ class LayerTests(TestCase):
 
             self.assertTrue(max_error_after < max_error_before, str(layer) + " failed to improve the error")
 
-    def test_semiseparable_layer(self):
+    def test_sss_layer(self):
         nb_samples = 51
         nb_inputs = 76
         nb_outputs = 14
@@ -112,7 +112,7 @@ class LayerTests(TestCase):
 
         random_input = np.random.uniform(-1,1,size=(nb_samples, nb_inputs))
 
-        layer = SemiseparableLayer(input_dim=nb_inputs, output_dim=nb_outputs, nb_params_share=nb_params_share, nb_states=nb_states)
+        layer = SSSLayer(input_dim=nb_inputs, output_dim=nb_outputs, nb_params_share=nb_params_share, nb_states=nb_states)
         layer_output = layer(torch.tensor(random_input).float()).detach().numpy()
 
         T = layer.initial_weight_matrix
@@ -202,6 +202,6 @@ class LayerTests(TestCase):
         approximator = SSSApproximator(nb_states=nb_states)
         res_dict = approximator.approximate(optim_mat=optim_mat, nb_params_share=nb_params_share)
         approximator_pred = (res_dict["approx_mat_dense"] @ random_input.T).T
-        layer = SemiseparableLayer(input_dim=input_dim, output_dim=output_dim, nb_params_share=nb_params_share, use_bias=False, nb_states=nb_states, initial_system_approx=res_dict["system_approx"])
+        layer = SSSLayer(input_dim=input_dim, output_dim=output_dim, nb_params_share=nb_params_share, use_bias=False, nb_states=nb_states, initial_system_approx=res_dict["system_approx"])
         layer_pred = layer.forward(random_input_torch).detach().numpy()
         self.assertTrue(np.allclose(approximator_pred, layer_pred, atol=1e-5, rtol=1e-5))

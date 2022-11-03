@@ -14,7 +14,7 @@ from structurednets.models.vgg16 import VGG16
 from structurednets.models.visionmodel import VisionModel
 from structurednets.features.extract_features import get_required_indices, get_features_output_filename
 from structurednets.training_helpers import train_with_features
-from structurednets.layers.sss_layer import SemiseparableLayer
+from structurednets.layers.sss_layer import SSSLayer
 
 def benchmark_train_sss_model(
     features_basepath: str, 
@@ -66,7 +66,7 @@ def benchmark_train_sss_model(
                                         else:
                                             initial_T = start_weight_mat.cpu().detach().numpy().T
                                             initial_bias = start_bias
-                                        model = SemiseparableLayer(input_dim=input_size, output_dim=output_size, nb_params_share=nb_param_share, nb_states=nb_states, initial_weight_matrix=initial_T, initial_bias=initial_bias)
+                                        model = SSSLayer(input_dim=input_size, output_dim=output_size, nb_params_share=nb_param_share, nb_states=nb_states, initial_weight_matrix=initial_T, initial_bias=initial_bias)
 
                                         if use_softmax:
                                             model = torch.nn.Sequential(model, torch.nn.Softmax())

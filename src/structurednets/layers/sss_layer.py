@@ -31,9 +31,9 @@ def get_max_statespace_dim(optim_mat: np.ndarray, nb_params_share: float, nb_sta
 def has_less_parameters_than_allowed(optim_mat: np.ndarray, nb_params_share: float, nb_states: int, state_space_dim: int) -> bool:
     return get_nb_parameters(optim_mat_shape=optim_mat.shape, statespace_dim=state_space_dim, nb_states=nb_states) < int(nb_params_share * optim_mat.size)
     
-class SemiseparableLayer(StructuredLayer):
+class SSSLayer(StructuredLayer):
     def __init__(self, input_dim: int, output_dim: int, nb_params_share: float, use_bias=True, initial_weight_matrix=None, initial_bias=None, nb_states=None, initial_system_approx=None):
-        super(SemiseparableLayer, self).__init__(input_dim=input_dim, output_dim=output_dim, nb_params_share=nb_params_share, use_bias=use_bias, initial_weight_matrix=initial_weight_matrix, initial_bias=initial_bias)
+        super(SSSLayer, self).__init__(input_dim=input_dim, output_dim=output_dim, nb_params_share=nb_params_share, use_bias=use_bias, initial_weight_matrix=initial_weight_matrix, initial_bias=initial_bias)
 
         if nb_states is None:
             nb_states = int(min(input_dim, output_dim) / 2)
@@ -147,7 +147,7 @@ if __name__ == "__main__":
     train_input = np.random.uniform(-1, 1, size=(nb_training_samples, input_dim)).astype(np.float32)
     train_output = np.ones((nb_training_samples, output_dim), dtype=np.float32)
 
-    layer = SemiseparableLayer(input_dim=input_dim, output_dim=output_dim, nb_params_share=nb_params_share)
+    layer = SSSLayer(input_dim=input_dim, output_dim=output_dim, nb_params_share=nb_params_share)
     trained_layer, start_train_loss, start_train_accuracy, start_val_loss, start_val_accuracy, train_loss_history, train_accuracy_history, val_loss_history, val_accuracy_history = train_with_decreasing_lr(
         model=layer, X_train=train_input, y_train=train_output,
         patience=1, batch_size=nb_training_samples, verbose=False,
@@ -170,7 +170,7 @@ if __name__ == "__main__":
     max_nb_parameters = int(nb_param_share * input_dim * output_dim)
     min_nb_parameters = int((nb_param_share - 0.1) * input_dim * output_dim)
     
-    layer = SemiseparableLayer(input_dim=input_dim, output_dim=output_dim, use_bias=False, nb_params_share=nb_param_share, nb_states=5)
+    layer = SSSLayer(input_dim=input_dim, output_dim=output_dim, use_bias=False, nb_params_share=nb_param_share, nb_states=5)
     nb_params = get_nb_model_parameters(layer)
 
     assert nb_params <= max_nb_parameters, "too many parameters"
