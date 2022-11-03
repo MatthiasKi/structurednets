@@ -4,7 +4,7 @@ from tvsclib.mixed_system import MixedSystem
 from tvsclib.toeplitz_operator import ToeplitzOperator
 from tvsclib.system_identification_svd import SystemIdentificationSVD
 
-from structurednets.layers.sss_layer import standard_dims_in_dims_out_computation, get_max_statespace_dim
+from structurednets.layers.sss_layer import standard_dims_in_dims_out_computation, get_max_statespace_dim, get_nb_parameters
 from structurednets.approximators.approximator import Approximator
 
 class SSSApproximator(Approximator):
@@ -21,6 +21,7 @@ class SSSApproximator(Approximator):
             res_dict["approx_mat_dense"] = np.zeros_like(optim_mat)
             res_dict["state_space_dim"] = 0
             res_dict["nb_states"] = 0
+            res_dict["nb_parameters"] = 0
             return res_dict
 
         dims_in, dims_out = standard_dims_in_dims_out_computation(input_size=optim_mat.shape[1], output_size=optim_mat.shape[0], nb_states=self.nb_states)
@@ -33,6 +34,7 @@ class SSSApproximator(Approximator):
         res_dict["approx_mat_dense"] = approx_mat_dense
         res_dict["state_space_dim"] = self.state_space_dim
         res_dict["nb_states"] = self.nb_states
+        res_dict["nb_parameters"] = get_nb_parameters(optim_mat_shape=optim_mat.shape, statespace_dim=self.state_space_dim, nb_states=self.nb_states)
         return res_dict
 
     def get_name(self):

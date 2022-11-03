@@ -35,6 +35,7 @@ class HODLRApproximator(Approximator):
         res_dict["type"] = "HODLRApproximator"
         res_dict["h_matrix"] = best_hmatrix
         res_dict["approx_mat_dense"] = best_hmatrix.to_dense_numpy()
+        res_dict["nb_parameters"] = best_hmatrix.block_cluster_tree.get_nb_params()
         return res_dict
 
     def get_name(self):

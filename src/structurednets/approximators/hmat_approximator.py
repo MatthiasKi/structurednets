@@ -31,6 +31,7 @@ class HMatApproximator(Approximator):
         res_dict["h_matrix"] = hmatrix
         res_dict["approx_mat_dense"] = hmatrix.to_dense_numpy()
         res_dict["eta"] = eta
+        res_dict["nb_parameters"] = hmatrix.block_cluster_tree.get_nb_params()
         return res_dict
 
     def get_name(self):
