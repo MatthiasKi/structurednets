@@ -37,7 +37,7 @@ class StructuredLayer(nn.Module, ABC):
             self.bias = None
     
     @abstractmethod
-    def forward(self, U):
+    def forward(self, U) -> torch.tensor:
         return torch.zeros((U.shape[0], self.output_dim))
     
     @abstractmethod

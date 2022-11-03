@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import numpy as np
+import pickle
 
 from tvsclib.mixed_system import MixedSystem
 from tvsclib.toeplitz_operator import ToeplitzOperator
@@ -31,19 +32,24 @@ def has_less_parameters_than_allowed(optim_mat: np.ndarray, nb_params_share: flo
     return get_nb_parameters(optim_mat_shape=optim_mat.shape, statespace_dim=state_space_dim, nb_states=nb_states) < int(nb_params_share * optim_mat.size)
     
 class SemiseparableLayer(StructuredLayer):
-    def __init__(self, input_dim: int, output_dim: int, nb_params_share: float, use_bias=True, initial_weight_matrix=None, initial_bias=None, nb_states=None):
+    def __init__(self, input_dim: int, output_dim: int, nb_params_share: float, use_bias=True, initial_weight_matrix=None, initial_bias=None, nb_states=None, initial_system_approx=None):
         super(SemiseparableLayer, self).__init__(input_dim=input_dim, output_dim=output_dim, nb_params_share=nb_params_share, use_bias=use_bias, initial_weight_matrix=initial_weight_matrix, initial_bias=initial_bias)
 
         if nb_states is None:
             nb_states = int(min(input_dim, output_dim) / 2)
         assert nb_states > 0, "Nb states must be positive"
 
+        assert initial_weight_matrix is None or initial_system_approx is None, "Either pass an initial weight matrix or the initial system approximation - not both"
+        if initial_system_approx is not None:
+            assert len(initial_system_approx.dims_in) == nb_states, "The given system approximation does not match the expected number of states (dims_in)"
+            assert len(initial_system_approx.dims_out) == nb_states, "The given system approximation does not match the expected number of states (dims_out)"
+
         self.input_dim = input_dim
         self.nb_states = nb_states
 
-        self.init_state_matrices(nb_params_share=nb_params_share, initial_weight_matrix=initial_weight_matrix)
+        self.init_state_matrices(nb_params_share=nb_params_share, initial_weight_matrix=initial_weight_matrix, initial_system_approx=initial_system_approx)
 
-    def init_state_matrices(self, nb_params_share: float, initial_weight_matrix=None):
+    def init_state_matrices(self, nb_params_share: float, initial_weight_matrix=None, initial_system_approx=None):
         if initial_weight_matrix is None:
             T_full = get_random_glorot_uniform_matrix(shape=(self.output_dim, self.input_dim))
         else:
@@ -53,9 +59,14 @@ class SemiseparableLayer(StructuredLayer):
 
         if has_less_parameters_than_allowed(optim_mat=T_full, nb_params_share=nb_params_share, nb_states=self.nb_states, state_space_dim=self.statespace_dim):
             self.dims_in, self.dims_out = standard_dims_in_dims_out_computation(input_size=self.input_dim, output_size=self.output_dim, nb_states=self.nb_states)
-            T_operator = ToeplitzOperator(T_full, self.dims_in, self.dims_out)
-            S = SystemIdentificationSVD(toeplitz=T_operator, max_states_local=self.statespace_dim)
-            system_approx = MixedSystem(S)
+            
+            if initial_system_approx is None:
+                T_operator = ToeplitzOperator(T_full, self.dims_in, self.dims_out)
+                S = SystemIdentificationSVD(toeplitz=T_operator, max_states_local=self.statespace_dim)
+                system_approx = MixedSystem(S)
+            else:
+                system_approx = pickle.loads(pickle.dumps(initial_system_approx))
+
             self.initial_weight_matrix = system_approx.to_matrix()
 
             A = [stage.A_matrix for stage in system_approx.causal_system.stages]

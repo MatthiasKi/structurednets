@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import numpy as np
+import pickle
 
 from structurednets.layers.layer_helpers import get_random_glorot_uniform_matrix, get_nb_model_parameters, get_random_glorot_uniform_matrix_torch
 from structurednets.approximators.ldr_approximator import LDRApproximator, init_representation_matrices_torch, build_weight_matrix_torch, get_max_ld_rank_wrt_max_nb_free_parameters
@@ -8,9 +9,14 @@ from structurednets.training_helpers import train, train_with_decreasing_lr
 from structurednets.layers.structured_layer import StructuredLayer
 
 class LDRLayer(StructuredLayer):
-    def __init__(self, input_dim: int, output_dim: int, nb_params_share: float, use_bias=True, initial_weight_matrix=None, initial_bias=None):
+    def __init__(self, input_dim: int, output_dim: int, nb_params_share: float, use_bias=True, initial_weight_matrix=None, initial_bias=None, initial_representation_matrices=None):
         super(LDRLayer, self).__init__(input_dim=input_dim, output_dim=output_dim, nb_params_share=nb_params_share, use_bias=use_bias, initial_weight_matrix=initial_weight_matrix, initial_bias=initial_bias)
         assert input_dim == output_dim, "The LDR Layer is only implemented for square weight matrices (i.e. when the number of inputs equals the number of outputs)"
+        assert initial_weight_matrix is None or initial_representation_matrices is None, "Either pass an initial weight matrix or initial representation matrices - not both"
+        if initial_representation_matrices is not None:
+            assert len(initial_representation_matrices) == 4, "Expect the length of the list of initial representation matrices to be 4"
+            for representation_matrix in initial_representation_matrices:
+                assert torch.is_tensor(representation_matrix), "Expect all representation matrices to be given as torch.tensor"
 
         self.target_mat_shape = (self.output_dim, input_dim)
         max_nb_parameters = int(nb_params_share * input_dim * self.output_dim)
@@ -20,7 +26,9 @@ class LDRLayer(StructuredLayer):
             self.representation_matrices = None
             self.fake_optim_param = nn.Parameter(get_random_glorot_uniform_matrix_torch((1, 1)))
         else:
-            if initial_weight_matrix is not None:
+            if initial_representation_matrices is not None:
+                representation_matrices = pickle.loads(pickle.dumps(initial_representation_matrices))
+            elif initial_weight_matrix is not None:
                 assert isinstance(initial_weight_matrix, np.ndarray), "The initial weight matrix must be passed as np.ndarray"
                 assert len(initial_weight_matrix.shape) == 2, "The initial weight matrix should have 2 dimensions"
                 assert np.array_equal(initial_weight_matrix.shape, np.array([self.output_dim, input_dim])), "The initial weight matrix does not have the expected shape (" + str(output_dim) + "," + str(input_dim) + ")"

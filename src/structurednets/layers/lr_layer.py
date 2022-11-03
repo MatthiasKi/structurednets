@@ -8,13 +8,22 @@ from structurednets.layers.structured_layer import StructuredLayer
 from structurednets.training_helpers import train, train_with_decreasing_lr
 
 class LRLayer(StructuredLayer):
-    def __init__(self, input_dim: int, output_dim: int, nb_params_share: float, use_bias=True, initial_weight_matrix=None, initial_bias=None):
+    def __init__(self, input_dim: int, output_dim: int, nb_params_share: float, use_bias=True, initial_weight_matrix=None, initial_bias=None, initial_lr_components=None):
         super(LRLayer, self).__init__(input_dim=input_dim, output_dim=output_dim, nb_params_share=nb_params_share, use_bias=use_bias, initial_weight_matrix=initial_weight_matrix, initial_bias=initial_bias)
+
+        assert initial_weight_matrix is None or initial_lr_components is None, "Either pass an initial weight matrix or initial lr components - not both"
+        if initial_lr_components is not None:
+            assert len(initial_lr_components) == 2, "Need to pass 2 lr components"
+            assert initial_lr_components[0].shape[0] == output_dim and initial_lr_components[1].shape[1] == input_dim, "The provided lr components do not match the given input and output dimensions"
+            assert initial_lr_components[0].shape[1] == initial_lr_components[1].shape[0], "The provided lr component shapes do not match - they can not be multiplied with each other"
 
         max_nb_parameters = int(nb_params_share * input_dim * output_dim)
         rank = int(max_nb_parameters / (input_dim + output_dim))
 
-        if initial_weight_matrix is not None:
+        if initial_lr_components is not None:
+            self.left_lr = torch.tensor(initial_lr_components[0])
+            self.right_lr = torch.tensor(initial_lr_components[1])
+        elif initial_weight_matrix is not None:
             lr_approximator = LRApproximator()
             res_dict = lr_approximator.approximate(optim_mat=initial_weight_matrix, nb_params_share=nb_params_share)
             self.left_lr = torch.tensor(res_dict["left_mat"])

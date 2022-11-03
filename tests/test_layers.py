@@ -5,11 +5,15 @@ import torch
 from structurednets.layers.sss_layer import SemiseparableLayer
 from structurednets.layers.lr_layer import LRLayer
 from structurednets.layers.psm_layer import PSMLayer
+from structurednets.layers.ldr_layer import LDRLayer
+from structurednets.layers.hmat_layer import HMatLayer
 from structurednets.layers.layer_helpers import get_nb_model_parameters
 from structurednets.training_helpers import train
 from structurednets.approximators.psm_approximator import PSMApproximator
-from structurednets.layers.ldr_layer import LDRLayer
-from structurednets.layers.hmat_layer import HMatLayer
+from structurednets.approximators.hmat_approximator import HMatApproximator
+from structurednets.approximators.lr_approximator import LRApproximator
+from structurednets.approximators.ldr_approximator import LDRApproximator
+from structurednets.approximators.sss_approximator import SSSApproximator
 
 def get_test_layer_classes(add_layers_requiring_square_weight_matrices=True) -> list:
     res = [
@@ -156,3 +160,48 @@ class LayerTests(TestCase):
         pred_output = layer.forward(torch.tensor(random_input)).detach().numpy()
 
         self.assertTrue(np.allclose(pred_output, target_output, atol=1e-5, rtol=1e-5))
+
+    def test_recovering_from_res_dicts(self):
+        input_dim = 50
+        output_dim = 50
+        nb_params_share = 0.5
+
+        optim_mat = np.random.uniform(-1, 1, size=(output_dim, input_dim)).astype(np.float32)
+        random_input = np.random.uniform(-1, 1, size=(10, input_dim)).astype(np.float32)
+        random_input_torch = torch.tensor(random_input)
+
+        approximator = LRApproximator()
+        res_dict = approximator.approximate(optim_mat=optim_mat, nb_params_share=nb_params_share)
+        approximator_pred = (res_dict["approx_mat_dense"] @ random_input.T).T
+        layer = LRLayer(input_dim=input_dim, output_dim=output_dim, nb_params_share=nb_params_share, use_bias=False, initial_lr_components=[res_dict["left_mat"], res_dict["right_mat"]])
+        layer_pred = layer.forward(random_input_torch).detach().numpy()
+        self.assertTrue(np.allclose(approximator_pred, layer_pred, atol=1e-5, rtol=1e-5))
+
+        approximator = LDRApproximator()
+        res_dict = approximator.approximate(optim_mat=optim_mat, nb_params_share=nb_params_share)
+        approximator_pred = (res_dict["approx_mat_dense"] @ random_input.T).T
+        layer = LDRLayer(input_dim=input_dim, output_dim=output_dim, nb_params_share=nb_params_share, use_bias=False, initial_representation_matrices=res_dict["ldr_mat"])
+        layer_pred = layer.forward(random_input_torch).detach().numpy()
+        self.assertTrue(np.allclose(approximator_pred, layer_pred, atol=1e-5, rtol=1e-5))
+
+        approximator = HMatApproximator()
+        res_dict = approximator.approximate(optim_mat=optim_mat, nb_params_share=nb_params_share)
+        approximator_pred = (res_dict["approx_mat_dense"] @ random_input.T).T
+        layer = HMatLayer(input_dim=input_dim, output_dim=output_dim, nb_params_share=nb_params_share, use_bias=False, initial_hmatrix=res_dict["h_matrix"])
+        layer_pred = layer.forward(random_input_torch).detach().numpy()
+        self.assertTrue(np.allclose(approximator_pred, layer_pred, atol=1e-5, rtol=1e-5))
+
+        approximator = PSMApproximator(nb_matrices=2, linear_nb_nonzero_elements_distribution=True)
+        res_dict = approximator.approximate(optim_mat=optim_mat, nb_params_share=nb_params_share)
+        approximator_pred = (res_dict["approx_mat_dense"] @ random_input.T).T
+        layer = PSMLayer(input_dim=input_dim, output_dim=output_dim, nb_params_share=nb_params_share, use_bias=False, sparse_matrices=res_dict["faust_approximation"])
+        layer_pred = layer.forward(random_input_torch).detach().numpy()
+        self.assertTrue(np.allclose(approximator_pred, layer_pred, atol=1e-5, rtol=1e-5))
+
+        nb_states = 5
+        approximator = SSSApproximator(nb_states=nb_states)
+        res_dict = approximator.approximate(optim_mat=optim_mat, nb_params_share=nb_params_share)
+        approximator_pred = (res_dict["approx_mat_dense"] @ random_input.T).T
+        layer = SemiseparableLayer(input_dim=input_dim, output_dim=output_dim, nb_params_share=nb_params_share, use_bias=False, nb_states=nb_states, initial_system_approx=res_dict["system_approx"])
+        layer_pred = layer.forward(random_input_torch).detach().numpy()
+        self.assertTrue(np.allclose(approximator_pred, layer_pred, atol=1e-5, rtol=1e-5))
