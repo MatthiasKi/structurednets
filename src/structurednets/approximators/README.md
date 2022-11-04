@@ -11,7 +11,7 @@ Depending on the problem at hand, one or the other structured matrix may be bett
 In this folder, you can find approximators for the following classes of structured matrices:
 - Sequentially Semiseparable Matrices: SSSApproximator
 - Low Rank Matrices: LRApproximator
-- Matrices of Low Displacement Rank (in particular: LDR matrices with tridiagonal plus corder operator matrices): LDRApproximator
+- Matrices of Low Displacement Rank: Toeplitz-Like Matrices (TLApproximator) and LDR matrices with tridiagonal plus corder operator matrices (LDRApproximator)
 - Hierarchical Matrices: HODLRApproximator (Hierarchically off diagonal low rank structure), HEDLRApproximator (Hierarchically equally distributed low rank structure) and general hierarchical matices approximator (HMatApproximator)
 - Products of Sparse Matrices: PSMApproximator
 
