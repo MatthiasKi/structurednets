@@ -44,7 +44,10 @@ class LDRLayer(StructuredLayer):
     def forward(self, U):
         # NOTE: This is very inefficient - there are better algorithms for computing an LDR matrix with another matrix. However, this is not implemented yet...
         # For more details, please read the paper "Learning Compressed Transforms with Low Displacement Rank" from Thomas et al.
-        
+        # TODO: Building the weight matrix and then multiplying with the inputs is not only inefficient, it also requires a massive amount of RAM (in order to keep
+        # track of the gradients). In order to use this practically (i.e. for matrices larger than 100x100), a direct matrix-matrix multiplication implementation would
+        # be required. 
+
         if self.representation_matrices is None:
             return torch.zeros((U.shape[0], self.output_dim))
         else:

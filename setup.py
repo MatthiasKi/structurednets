@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="structurednets",
-    version="0.0.2",
+    version="1.0.0",
     author="Matthias Kissel",
     author_email="matthias.kissel@tum.de",
     description="Algorithms for using structured weight matrices in neural networks",
@@ -23,14 +23,14 @@ setuptools.setup(
     python_requires=">=3.6",
     include_package_data=True,
     install_requires=[
-        "scipy",
+        "scipy>=1.9",
         "torch",
-	"torchvision",
+	    "torchvision",
         "numpy",
         "pyfaust",
     	"Pillow",
     	"scikit-learn",
     	"tvsclib @ git+https://github.com/MatthiasKi/tvsclib",
-	"matplotlib",
+	    "matplotlib",
     ],
 )

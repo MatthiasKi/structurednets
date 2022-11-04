@@ -1,5 +1,6 @@
 from unittest import TestCase
 import numpy as np
+from scipy.linalg import toeplitz
 
 from structurednets.approximators.psm_approximator import PSMApproximator
 from structurednets.approximators.psm_approximator_wrapper import PSMApproximatorWrapper
@@ -9,6 +10,7 @@ from structurednets.approximators.hodlr_approximator import HODLRApproximator
 from structurednets.approximators.hedlr_approximator import HEDLRApproximator
 from structurednets.approximators.lr_approximator import LRApproximator
 from structurednets.approximators.sss_approximator_wrapper import SSSApproximatorWrapper
+from structurednets.approximators.tl_approximator import TLApproximator, get_f_circulant_matrix, build_tl_matrix
 
 class ApproximatorTests(TestCase):
     def test_psm_approximator(self):
@@ -117,3 +119,30 @@ class ApproximatorTests(TestCase):
         res = approximator_2.approximate(optim_mat, nb_params_share=0.5)
         approx_mat_dense = res["approx_mat_dense"]
         self.assertTrue(np.allclose(optim_mat, approx_mat_dense, rtol=1e-5, atol=1e-5), "The HEDLR approximation algorithm should be able to fully recover a HEDLR matrix")
+
+    def test_tl_approximator(self):
+        approximator = TLApproximator()
+
+        optim_mat = np.random.uniform(-1,1, size=(30, 30))
+        param_share = 0.2
+        max_nb_parameters = int(optim_mat.size * param_share)
+        res = approximator.approximate(optim_mat, nb_params_share=param_share)
+        approx_mat_dense = res["approx_mat_dense"]
+        nb_parameters = res["nb_parameters"]
+        self.assertTrue(np.array_equal(approx_mat_dense.shape, np.array([30, 30])), "The approximated optim_mat has the wrong shape")
+        self.assertTrue(nb_parameters <= max_nb_parameters, "The number of parameters in the approximation should be lower or equal the maximum number of allowed parameters")
+
+        column = np.random.uniform(-1, 1, size=(60,))
+        row = np.random.uniform(-1, 1, size=(60,))
+        row[0] = column[0]
+        optim_mat = toeplitz(c=column, r=row)
+        res_dict = approximator.approximate(optim_mat=optim_mat, nb_params_share=0.1)
+        self.assertTrue(np.allclose(optim_mat, res_dict["approx_mat_dense"]), "The approximator should be capable of perfectly reconstructing a toeplitz matrix")
+
+        mat_size = 30
+        displacement_rank = 3
+        G = np.random.uniform(-1, 1, size=(mat_size, displacement_rank))
+        H = np.random.uniform(-1, 1, size=(displacement_rank, mat_size))
+        optim_mat = build_tl_matrix(G=G, H=H)
+        res_dict = approximator.approximate(optim_mat=optim_mat, nb_params_share=0.2)
+        self.assertTrue(np.allclose(optim_mat, res_dict["approx_mat_dense"]), "The approximator should be capable of perfectly reconstructing a toeplitz-like matrix")

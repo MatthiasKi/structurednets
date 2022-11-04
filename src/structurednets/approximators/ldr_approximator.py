@@ -59,7 +59,7 @@ class LDRApproximator(Approximator):
         return name
 
     def approximate(self, optim_mat: np.ndarray, nb_params_share: float):
-        assert len(optim_mat.shape) == 2, "Can only handle matrices for LDR approximation"
+        assert len(optim_mat.shape) == 2 and optim_mat.shape[0] == optim_mat.shape[1], "Can only handle square matrices for LDR approximation"
 
         best_ldr_mat = None
         best_approx_mat_dense = np.zeros_like(optim_mat)
