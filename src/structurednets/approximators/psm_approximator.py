@@ -12,7 +12,7 @@ class PSMApproximator(Approximator):
         self.nb_matrices = nb_matrices
         self.linear_nb_nonzero_elements_distribution = linear_nb_nonzero_elements_distribution
 
-    def approximate(self, optim_mat: np.ndarray, nb_params_share: float, num_interpolation_steps=17):
+    def approximate(self, optim_mat: np.ndarray, nb_params_share: float, num_interpolation_steps=9):
         self.nnz_share = nb_params_share
 
         optim_mat64 = optim_mat.astype("float64")
