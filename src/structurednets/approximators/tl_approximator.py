@@ -63,6 +63,13 @@ class TLApproximator(Approximator):
 if __name__ == "__main__":
     approximator = TLApproximator()
 
+    optim_mat = np.random.uniform(-1, 1, size=(100, 100))
+    print("Optim mat norm: " + str(np.linalg.norm(optim_mat, ord="fro")))
+    for nb_param_share in [0.1, 0.4, 2.0]:
+        res_dict = approximator.approximate(optim_mat=optim_mat, nb_params_share=nb_param_share)
+        norm_difference = np.linalg.norm(optim_mat - res_dict["approx_mat_dense"], ord="fro")
+        print("Norm Difference " + str(nb_param_share) + ": " + str(norm_difference))
+
     # ---
 
     size = 60

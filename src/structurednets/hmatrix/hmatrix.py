@@ -32,14 +32,17 @@ class HMatrix:
     def get_all_hmatrix_components(self) -> list:
         return self.block_cluster_tree.get_all_hmatrix_components()
 
-    def find_best_leaf_approximation(self, optim_mat: np.ndarray, nb_params_share: float):
-        self.shape = optim_mat.shape
-        max_nb_parameters = int(self.shape[0] * self.shape[1] * nb_params_share)
-
+    def set_full_components(self, optim_mat: np.ndarray):
         leaf_elements = self.block_cluster_tree.get_all_leaf_elements()
         for leaf_element in leaf_elements:
             full_component = optim_mat[leaf_element.row_range.start:leaf_element.row_range.stop, leaf_element.col_range.start:leaf_element.col_range.stop]
             leaf_element.hmatrix_component.set_full_component(full_component)
+
+    def find_best_leaf_approximation(self, optim_mat: np.ndarray, nb_params_share: float):
+        self.shape = optim_mat.shape
+        max_nb_parameters = int(self.shape[0] * self.shape[1] * nb_params_share)
+
+        self.set_full_components(optim_mat=optim_mat)
 
         elements_where_parameters_can_be_added = self.block_cluster_tree.get_all_elements_where_parameters_can_be_added(max_nb_parameters=max_nb_parameters)
         while len(elements_where_parameters_can_be_added) > 0:

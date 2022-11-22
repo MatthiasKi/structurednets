@@ -69,7 +69,7 @@ class HMatrixComponent(nn.Module):
         self.right_full_component = torch.tensor(np.diag(S_root) @ Vh).float()
 
         reassembled_full_component = torch.matmul(self.left_full_component, self.right_full_component)
-        assert np.allclose(full_component, reassembled_full_component.detach().numpy(), rtol=1e-5, atol=1e-5), "After reassambling the full component it should be close to the passed full component"
+        assert np.allclose(full_component, reassembled_full_component.detach().numpy(), rtol=1e-4, atol=1e-4), "After reassambling the full component it should be close to the passed full component"
 
     def is_full_component_set(self):
         return hasattr(self, "left_full_component") and hasattr(self, "right_full_component")

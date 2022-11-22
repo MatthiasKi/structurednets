@@ -1,1 +1,2 @@
 include src/structurednets/labels/*.txt
+include src/structurednets/testmatrices/*.p

@@ -46,7 +46,7 @@ class HEDLRApproximator(Approximator):
 
 if __name__ == "__main__":
     tree = build_hedlr_block_cluster_tree(4, (100, 100))
-    #tree.plot()
+    tree.plot()
 
     #optim_mat = np.random.uniform(-1,1, size=(51,10))
     model = GoogleNet(output_indices=np.arange(1000), use_gpu=False)

@@ -35,11 +35,11 @@ class HMatApproximator(Approximator):
         return res_dict
 
     def get_name(self):
-        return "HODLRApproximator"
+        return "HMatApproximator"
 
 if __name__ == "__main__":
-    #tree = build_hmat_block_cluster_tree((100, 100), 0.8)
-    #tree.plot()
+    tree = build_hmat_block_cluster_tree((100, 100), 0.5)
+    tree.plot()
 
     model = GoogleNet(output_indices=np.arange(1000), use_gpu=False)
     optim_mat = model.get_optimization_matrix().detach().numpy()

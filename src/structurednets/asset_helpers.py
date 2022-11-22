@@ -7,6 +7,9 @@ import scipy.io
 def get_label_folder_path() -> str:
     return os.path.join(importlib_resources.files("structurednets"), "labels")
 
+def get_test_matrices_folder_path() -> str:
+    return os.path.join(importlib_resources.files("structurednets"), "testmatrices")
+
 def get_all_classes_filepath() -> str:
     return os.path.join(get_label_folder_path(), "all_imagenet_classes.txt")
 
@@ -27,6 +30,13 @@ def get_validation_metadata_filepath() -> str:
 
 def assemble_features_output_filename(model_name: str, labels_tag: str):
     return model_name + "_" + labels_tag + "_features.p"
+
+def get_all_test_matrix_dicts() -> list:
+    folder_path = get_test_matrices_folder_path()
+    test_matrices_filenames = os.listdir(folder_path)
+    test_matrices_filenames = [filename for filename in test_matrices_filenames if filename[-2:] == ".p"]
+    test_matrix_dicts = [pickle.load(open(os.path.join(folder_path, filename), "rb")) for filename in test_matrices_filenames]
+    return test_matrix_dicts
 
 def load_features(path_to_feature_file: str):
     X, y, y_pred = pickle.load(open(path_to_feature_file, "rb"))
