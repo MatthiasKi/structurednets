@@ -4,13 +4,14 @@ from structurednets.approximators.approximator import Approximator
 from structurednets.approximators.psm_approximator import PSMApproximator
 
 class PSMApproximatorWrapper(Approximator):
-    def __init__(self, num_interpolation_steps=17, only_linear_distribution=True, max_nb_matrices=3):
+    def __init__(self, num_interpolation_steps=17, only_linear_distribution=True, max_nb_matrices=3, max_last_mat_param_share=0.9):
         self.num_interpolation_steps = num_interpolation_steps
         if only_linear_distribution:
             self.linear_nb_nonzero_elements_distribution_values = [True]
         else:
             self.linear_nb_nonzero_elements_distribution_values = [True, False]
         self.max_nb_matrices = max_nb_matrices
+        self.max_last_mat_param_share = max_last_mat_param_share
 
     def get_name(self):
         name = "PSMApproximatorWrapper"

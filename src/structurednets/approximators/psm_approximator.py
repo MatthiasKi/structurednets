@@ -8,9 +8,10 @@ from pyfaust.factparams import ParamsHierarchical, StoppingCriterion
 from structurednets.approximators.approximator import Approximator
 
 class PSMApproximator(Approximator):
-    def __init__(self, nb_matrices: int, linear_nb_nonzero_elements_distribution: bool):
+    def __init__(self, nb_matrices: int, linear_nb_nonzero_elements_distribution: bool, max_last_mat_param_share=0.9):
         self.nb_matrices = nb_matrices
         self.linear_nb_nonzero_elements_distribution = linear_nb_nonzero_elements_distribution
+        self.max_last_mat_param_share = max_last_mat_param_share
 
     def approximate(self, optim_mat: np.ndarray, nb_params_share: float, num_interpolation_steps=9):
         self.nnz_share = nb_params_share
@@ -18,7 +19,7 @@ class PSMApproximator(Approximator):
         optim_mat64 = optim_mat.astype("float64")
         nb_nonzero_elements = int(optim_mat64.size * self.nnz_share)
         best_approximation = None
-        for last_mat_param_share in np.linspace(0.1, 0.9, num=num_interpolation_steps):
+        for last_mat_param_share in np.linspace(0.1, self.max_last_mat_param_share, num=num_interpolation_steps):
             last_nb_nonzero_elements = int(last_mat_param_share * nb_nonzero_elements)
             res_dict = self.faust_approximation(weights=optim_mat64, last_nb_nonzero_elements=last_nb_nonzero_elements, total_nb_nonzero_elements=nb_nonzero_elements)
             
