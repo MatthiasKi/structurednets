@@ -22,7 +22,7 @@ def benchmark_approximate_test_matrices(results_filepath="test_matrices_approxim
         HMatApproximatorWrapper(),
         TLApproximator(),
         LRApproximator(),
-        PSMApproximatorWrapper(num_interpolation_steps=5, only_linear_distribution=True),
+        PSMApproximatorWrapper(num_interpolation_steps=4),
         SSSApproximatorWrapper(num_states_steps=3),
     ]
 
@@ -64,7 +64,7 @@ def benchmark_approximate_weight_matrices(results_filepath="weight_matrices_appr
     approximators = [
         HMatApproximatorWrapper(),
         LRApproximator(),
-        PSMApproximatorWrapper(num_interpolation_steps=5, only_linear_distribution=True),
+        PSMApproximatorWrapper(num_interpolation_steps=4),
         SSSApproximatorWrapper(num_states_steps=3),
     ]
 

@@ -4,12 +4,13 @@ from structurednets.approximators.approximator import Approximator
 from structurednets.approximators.psm_approximator import PSMApproximator
 
 class PSMApproximatorWrapper(Approximator):
-    def __init__(self, num_interpolation_steps=17, only_linear_distribution=False):
+    def __init__(self, num_interpolation_steps=17, only_linear_distribution=True, max_nb_matrices=3):
         self.num_interpolation_steps = num_interpolation_steps
         if only_linear_distribution:
             self.linear_nb_nonzero_elements_distribution_values = [True]
         else:
             self.linear_nb_nonzero_elements_distribution_values = [True, False]
+        self.max_nb_matrices = max_nb_matrices
 
     def get_name(self):
         name = "PSMApproximatorWrapper"
@@ -18,7 +19,8 @@ class PSMApproximatorWrapper(Approximator):
     def approximate(self, optim_mat: np.ndarray, nb_params_share: float):
         optim_mat64 = optim_mat.astype("float64")
         best_approximation = None
-        for nb_matrices in [2, 3]:
+        nb_matrices_list = list(range(2, self.max_nb_matrices+1))
+        for nb_matrices in nb_matrices_list:
             for linear_nb_nonzero_elements_distribution in self.linear_nb_nonzero_elements_distribution_values:
                 approximator = PSMApproximator(nb_matrices=nb_matrices, linear_nb_nonzero_elements_distribution=linear_nb_nonzero_elements_distribution)
                 res_dict = approximator.approximate(optim_mat=optim_mat, nb_params_share=nb_params_share, num_interpolation_steps=self.num_interpolation_steps)
