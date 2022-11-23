@@ -20,8 +20,11 @@ def build_hmat_block_cluster_tree(matrix_shape: tuple, eta: float, min_block_siz
     return res
 
 class HMatApproximator(Approximator):
-    def approximate(self, optim_mat: np.ndarray, nb_params_share: float, eta=0.5):
-        block_cluster_tree = build_hmat_block_cluster_tree(matrix_shape=optim_mat.shape, eta=eta)
+    def __init__(self, eta=0.5):
+        self.eta = eta
+
+    def approximate(self, optim_mat: np.ndarray, nb_params_share: float):
+        block_cluster_tree = build_hmat_block_cluster_tree(matrix_shape=optim_mat.shape, eta=self.eta)
         hmatrix = HMatrix(block_cluster_tree=block_cluster_tree)
         hmatrix.find_best_leaf_approximation(optim_mat=optim_mat, nb_params_share=nb_params_share)
 
@@ -30,7 +33,7 @@ class HMatApproximator(Approximator):
         res_dict["type"] = "HMatApproximator"
         res_dict["h_matrix"] = hmatrix
         res_dict["approx_mat_dense"] = hmatrix.to_dense_numpy()
-        res_dict["eta"] = eta
+        res_dict["eta"] = self.eta
         res_dict["nb_parameters"] = hmatrix.block_cluster_tree.get_nb_params()
         return res_dict
 
@@ -38,7 +41,7 @@ class HMatApproximator(Approximator):
         return "HMatApproximator"
 
 if __name__ == "__main__":
-    tree = build_hmat_block_cluster_tree((100, 100), 0.5)
+    tree = build_hmat_block_cluster_tree((1000, 1000), 0.5)
     tree.plot()
 
     model = GoogleNet(output_indices=np.arange(1000), use_gpu=False)

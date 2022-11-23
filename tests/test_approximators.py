@@ -10,7 +10,8 @@ from structurednets.approximators.hodlr_approximator import HODLRApproximator
 from structurednets.approximators.hedlr_approximator import HEDLRApproximator
 from structurednets.approximators.lr_approximator import LRApproximator
 from structurednets.approximators.sss_approximator_wrapper import SSSApproximatorWrapper
-from structurednets.approximators.tl_approximator import TLApproximator, get_f_circulant_matrix, build_tl_matrix
+from structurednets.approximators.hmat_approximator_wrapper import HMatApproximatorWrapper
+from structurednets.approximators.tl_approximator import TLApproximator, build_tl_matrix
 
 class ApproximatorTests(TestCase):
     def test_psm_approximator(self):
@@ -146,3 +147,10 @@ class ApproximatorTests(TestCase):
         optim_mat = build_tl_matrix(G=G, H=H)
         res_dict = approximator.approximate(optim_mat=optim_mat, nb_params_share=0.2)
         self.assertTrue(np.allclose(optim_mat, res_dict["approx_mat_dense"]), "The approximator should be capable of perfectly reconstructing a toeplitz-like matrix")
+
+    def test_hmat_approximator_wrapper(self):
+        optim_mat = np.random.uniform(-1,1, size=(20,16))
+        approximator = HMatApproximatorWrapper()
+        res = approximator.approximate(optim_mat, nb_params_share=0.2)
+        approx_mat_dense = res["approx_mat_dense"]
+        self.assertTrue(np.array_equal(approx_mat_dense.shape, np.array([20,16])), "The approximated optim_mat has the wrong shape")

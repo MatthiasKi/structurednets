@@ -17,8 +17,8 @@ class HMatLayer(StructuredLayer):
         else:
             if initial_weight_matrix is None:
                 initial_weight_matrix = get_random_glorot_uniform_matrix((output_dim, input_dim))
-            hmat_approximator = HMatApproximator()
-            res_dict = hmat_approximator.approximate(optim_mat=initial_weight_matrix, nb_params_share=nb_params_share, eta=eta)
+            hmat_approximator = HMatApproximator(eta=eta)
+            res_dict = hmat_approximator.approximate(optim_mat=initial_weight_matrix, nb_params_share=nb_params_share)
             self.hmatrix = res_dict["h_matrix"].clone()
 
         self.hmatrix_components = nn.ModuleList(self.hmatrix.get_all_hmatrix_components())
