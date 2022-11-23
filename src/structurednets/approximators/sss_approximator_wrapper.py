@@ -12,7 +12,7 @@ class SSSApproximatorWrapper(Approximator):
         best_error = None
 
         smallest_dim = min(optim_mat.shape)
-        nb_states_steps = np.linspace(start=smallest_dim/10, stop=smallest_dim, num=self.num_states_steps)
+        nb_states_steps = np.linspace(start=smallest_dim/10, stop=smallest_dim/2, num=self.num_states_steps)
         nb_states_steps = nb_states_steps.astype("int")
         for nb_states in nb_states_steps:
             sss_approximator = SSSApproximator(nb_states=nb_states)
