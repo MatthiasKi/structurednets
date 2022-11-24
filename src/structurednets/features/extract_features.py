@@ -6,7 +6,7 @@ import torch.utils.data
 import torchvision.transforms as transforms
 from PIL import Image
 
-from structurednets.asset_helpers import get_animal_classes_filepath, get_object_classes_filepath, get_label_name_from_path, assemble_features_output_filename, get_output_idx_for_validation_imagename
+from structurednets.asset_helpers import get_animal_classes_filepath, get_object_classes_filepath, get_label_name_from_path, assemble_features_output_filename, get_output_idx_for_validation_imagename, get_all_classes_filepath
 from structurednets.models.visionmodel import VisionModel
 from structurednets.models.alexnet import AlexNet
 from structurednets.models.googlenet import GoogleNet
@@ -22,6 +22,9 @@ def get_label_file_lines(path_to_label_file: str):
 
 def get_required_indices(path_to_label_file: str):
     label_lines = get_label_file_lines(path_to_label_file=path_to_label_file)
+    if len(label_lines) == 1000:
+        # These are all classes
+        return np.arange(1000)
         
     # NOTE The correct mapping from network output index to class is given by: https://gist.github.com/yrevar/942d3a0ac09ec9e5eb3a
     required_indices = []
@@ -131,30 +134,30 @@ if __name__ == "__main__":
     # Setup for extracting training features
     # ---------------------
 
-    # output_folder_path = "/path/to/features/"
-    # training_folder_path = "/path/to/train/"
-    # model_class = AlexNet
-    # label_filepath = get_object_classes_filepath()
+    output_folder_path = "/path/to/features/"
+    training_folder_path = "/path/to/train/"
+    model_class = GoogleNet
+    label_filepath = get_all_classes_filepath()
 
-    # extract_features(
-    #     output_folder_path=output_folder_path,
-    #     training_folder_path=training_folder_path,
-    #     model_class=model_class,
-    #     label_filepath=label_filepath
-    # )
+    extract_features(
+        output_folder_path=output_folder_path,
+        training_folder_path=training_folder_path,
+        model_class=model_class,
+        label_filepath=label_filepath
+    )
 
     # ---------------------
     # Setup for extracting validation features
     # ---------------------
     
-    output_folder_path = "/path/to/validation_features/"
-    validation_folder_path = "/path/to/Imagenet/val/"
-    model_class = AlexNet
-    label_filepath = get_animal_classes_filepath()
+    # output_folder_path = "/path/to/validation_features/"
+    # validation_folder_path = "/path/to/Imagenet/val/"
+    # model_class = AlexNet
+    # label_filepath = get_animal_classes_filepath()
 
-    extract_validation_features(
-        output_folder_path=output_folder_path,
-        validation_folder_path=validation_folder_path,
-        model_class=model_class,
-        label_filepath=label_filepath
-    )
+    # extract_validation_features(
+    #     output_folder_path=output_folder_path,
+    #     validation_folder_path=validation_folder_path,
+    #     model_class=model_class,
+    #     label_filepath=label_filepath
+    # )
