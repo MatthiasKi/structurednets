@@ -1,6 +1,7 @@
 import numpy as np
 
 from structurednets.approximators.hmat_approximator import HMatApproximator
+from structurednets.approximators.hedlr_approximator import HEDLRApproximator
 from structurednets.approximators.approximator import Approximator
 
 class HMatApproximatorWrapper(Approximator):
@@ -21,6 +22,14 @@ class HMatApproximatorWrapper(Approximator):
                 or curr_error < best_error:
                 best_res_dict = res_dict
                 best_error = curr_error
+        
+        approximator = HEDLRApproximator()
+        res_dict = approximator.approximate(optim_mat=optim_mat, nb_params_share=nb_params_share, max_depth=6)
+        curr_error = np.linalg.norm(optim_mat - res_dict["approx_mat_dense"], ord="fro")
+        if best_res_dict is None \
+            or curr_error < best_error:
+            best_res_dict = res_dict
+            best_error = curr_error
 
         return best_res_dict
 
