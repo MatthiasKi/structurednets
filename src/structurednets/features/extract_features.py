@@ -37,6 +37,16 @@ def get_required_indices(path_to_label_file: str):
 def get_features_output_filename(model_class: VisionModel, label_filepath: str):
     return assemble_features_output_filename(model_class.__name__, get_label_name_from_path(label_filepath))
 
+def get_preprocessing_transformation():
+    normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                     std=[0.229, 0.224, 0.225])
+    img_transformation = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Resize(256), # NOTE This ensures that the smaller dimension has at least 256 pixels
+            normalize,
+    ])
+    return img_transformation
+
 def extract_validation_features(output_folder_path: str, validation_folder_path: str, model_class: VisionModel, label_filepath: str, use_gpu=True):
     if use_gpu:
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -51,13 +61,7 @@ def extract_validation_features(output_folder_path: str, validation_folder_path:
     required_indices = get_required_indices(label_filepath)
 
     model = model_class(output_indices=required_indices)
-    normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                                     std=[0.229, 0.224, 0.225])
-    img_transformation = transforms.Compose([
-            transforms.ToTensor(),
-            transforms.Resize(256), # NOTE This ensures that the smaller dimension has at least 256 pixels
-            normalize,
-    ])
+    img_transformation = get_preprocessing_transformation()
 
     X = []
     y = []
@@ -97,13 +101,7 @@ def extract_features(output_folder_path: str, training_folder_path: str, model_c
     required_indices = get_required_indices(label_filepath)
 
     model = model_class(output_indices=required_indices)
-    normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                                     std=[0.229, 0.224, 0.225])
-    img_transformation = transforms.Compose([
-            transforms.ToTensor(),
-            transforms.Resize(256), # NOTE This ensures that the smaller dimension has at least 256 pixels
-            normalize,
-    ])
+    img_transformation = get_preprocessing_transformation()
 
     X = []
     y = []
