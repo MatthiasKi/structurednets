@@ -1,6 +1,6 @@
-import numpy as np
 import pickle
 import torch
+import os
 
 from structurednets.models.googlenet import GoogleNet
 from structurednets.models.inceptionv3 import InceptionV3
@@ -11,20 +11,22 @@ from structurednets.layers.lr_layer import LRLayer
 from structurednets.layers.psm_layer import PSMLayer
 from structurednets.layers.sss_layer import SSSLayer
 from structurednets.training_helpers import train_with_decreasing_lr, get_loss_and_accuracy_for_model, get_full_batch, get_train_data, transform_feature_dtypes
-from structurednets.asset_helpers import load_features
+from structurednets.asset_helpers import load_features, get_all_classes_filepath, get_animal_classes_filepath
+from structurednets.features.extract_features import get_required_indices, get_features_output_filename
 
 def benchmark_finetune_weight_matrices(
-    train_features_path: str,
-    val_features_path: str,
+    train_features_basepath: str,
+    val_features_basepath: str,
+    path_to_labelfile: str,
     results_filepath="weight_matrix_finetuning_result.p",
     pretrained_dicts_path="test_matrices_approximation_result.p",
     patience=10,
     batch_size=1000,
     min_patience_improvement=1e-6,
-    loss_function_class=torch.nn.CrossEntropyLoss
+    loss_function_class=torch.nn.CrossEntropyLoss,
 ):
     weight_matrix_data = pickle.load(open(pretrained_dicts_path, "rb"))
-    required_indices = np.arange(1000)
+    required_indices = get_required_indices(path_to_label_file=path_to_labelfile)
 
     model_classes = [
         GoogleNet,
@@ -35,6 +37,9 @@ def benchmark_finetune_weight_matrices(
 
     result = dict()
     for model_class in model_classes:
+        train_features_path = os.path.join(train_features_basepath, get_features_output_filename(model_class, path_to_labelfile))
+        val_features_path = os.path.join(val_features_basepath, get_features_output_filename(model_class, path_to_labelfile))
+
         model_name = model_class.__name__
         model = model_class(output_indices=required_indices, use_gpu=False)
         weight_matrix = model.get_optimization_matrix().detach().numpy()
@@ -98,10 +103,12 @@ def benchmark_finetune_weight_matrices(
         pickle.dump(result, open(results_filepath, "wb"))
 
 if __name__ == "__main__":
-    train_features_path = "path/to/train_features.p"
-    val_features_path = "path/to/val_features.p"
+    train_features_basepath = "path/to/train_features/"
+    val_features_basepath = "path/to/val_features/"
+    path_to_labelfile = get_all_classes_filepath()
 
     benchmark_finetune_weight_matrices(
-        train_features_path=train_features_path,
-        val_features_path=val_features_path,
+        train_features_basepath=train_features_basepath,
+        val_features_basepath=val_features_basepath,
+        path_to_labelfile=path_to_labelfile,
     )
