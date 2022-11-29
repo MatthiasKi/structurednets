@@ -19,7 +19,7 @@ def benchmark_finetune_weight_matrices(
     val_features_basepath: str,
     path_to_labelfile: str,
     results_filepath="weight_matrix_finetuning_result.p",
-    pretrained_dicts_path="test_matrices_approximation_result.p",
+    pretrained_dicts_path="weight_matrices_approximation_result.p",
     patience=10,
     batch_size=1000,
     min_patience_improvement=1e-6,
@@ -45,6 +45,9 @@ def benchmark_finetune_weight_matrices(
         weight_matrix = model.get_optimization_matrix().detach().numpy()
         input_dim = weight_matrix.shape[1]
         output_dim = weight_matrix.shape[0]
+        nb_params_share = 0.2
+
+        print("------------------ Starting " + model_name + " ---------------------")
 
         X_train, X_val, y_train, y_val = get_train_data(train_features_path)
         X_train, X_val, y_train, y_val = transform_feature_dtypes(X_train=X_train, X_val=X_val, y_train=y_train, y_val=y_val)
@@ -64,27 +67,32 @@ def benchmark_finetune_weight_matrices(
             HMatLayer(
                 input_dim=input_dim,
                 output_dim=output_dim,
-                initial_hmatrix=weight_matrix_data[0.2]["HMatApproximatorWrapper"][model_name]["res_dict"]["h_matrix"]
+                nb_params_share=nb_params_share,
+                initial_hmatrix=weight_matrix_data[nb_params_share]["HMatApproximatorWrapper"][model_name]["res_dict"]["h_matrix"]
             ),
             LRLayer(
                 input_dim=input_dim,
                 output_dim=output_dim,
-                initial_lr_components=[weight_matrix_data[0.2]["LRApproximator"][model_name]["res_dict"]["left_mat"], weight_matrix_data[0.2]["LRApproximator"][model_name]["res_dict"]["right_mat"]]
+                nb_params_share=nb_params_share,
+                initial_lr_components=[weight_matrix_data[nb_params_share]["LRApproximator"][model_name]["res_dict"]["left_mat"], weight_matrix_data[0.2]["LRApproximator"][model_name]["res_dict"]["right_mat"]]
             ),
             PSMLayer(
                 input_dim=input_dim,
                 output_dim=output_dim,
-                sparse_matrices=weight_matrix_data[0.2]["PSMApproximatorWrapper"][model_name]["res_dict"]["faust_approximation"]
+                nb_params_share=nb_params_share,
+                sparse_matrices=weight_matrix_data[nb_params_share]["PSMApproximatorWrapper"][model_name]["res_dict"]["faust_approximation"]
             ),
             SSSLayer(
                 input_dim=input_dim,
                 output_dim=output_dim,
-                initial_system_approx=weight_matrix_data[0.2]["SSSApproximatorWrapper"][model_name]["res_dict"]["system_approx"]
+                nb_params_share=nb_params_share,
+                initial_system_approx=weight_matrix_data[nb_params_share]["SSSApproximatorWrapper"][model_name]["res_dict"]["system_approx"]
 
             )
         ]
         
         for approximator_name, layer in zip(approximator_names, layers):
+            print("Now checking " + approximator_name)
             test_loss_before_training, test_accuracy_before_training = get_loss_and_accuracy_for_model(model=layer, X_t=X_test_t, y_t=y_test_t, loss_function_class=loss_function_class)
             trained_layer, _, _, _, _, train_loss_history, train_accuracy_history, val_loss_history, val_accuracy_history = train_with_decreasing_lr(model=layer, X_train=X_train, y_train=y_train, X_val=None, y_val=None, patience=patience, batch_size=batch_size, verbose=False, loss_function_class=loss_function_class, min_patience_improvement=min_patience_improvement, optimizer_class=torch.optim.SGD, finetune_mode=True)
             test_loss_after_training, test_accuracy_after_training = get_loss_and_accuracy_for_model(model=trained_layer, X_t=X_test_t, y_t=y_test_t, loss_function_class=loss_function_class)
@@ -105,7 +113,7 @@ def benchmark_finetune_weight_matrices(
 if __name__ == "__main__":
     train_features_basepath = "path/to/train_features/"
     val_features_basepath = "path/to/val_features/"
-    path_to_labelfile = get_all_classes_filepath()
+    path_to_labelfile = get_animal_classes_filepath()
 
     benchmark_finetune_weight_matrices(
         train_features_basepath=train_features_basepath,
