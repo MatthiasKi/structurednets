@@ -12,6 +12,8 @@ from structurednets.models.googlenet import GoogleNet
 from structurednets.models.inceptionv3 import InceptionV3
 from structurednets.models.mobilenetv2 import MobilenetV2
 from structurednets.models.resnet18 import Resnet18
+from structurednets.features.extract_features import get_required_indices
+from structurednets.asset_helpers import get_all_classes_filepath
 
 def get_approximation_error(orig: np.ndarray, approx: np.ndarray) -> float:
     return np.linalg.norm(orig-approx, ord="fro")
@@ -59,7 +61,7 @@ def benchmark_approximate_test_matrices(results_filepath="test_matrices_approxim
                     
         pickle.dump(result, open(results_filepath, "wb"))
 
-def benchmark_approximate_weight_matrices(results_filepath="weight_matrices_approximation_result.p"):
+def benchmark_approximate_weight_matrices(path_to_labelfile: str,results_filepath="weight_matrices_approximation_result.p"):
     nb_params_shares = np.linspace(start=0.1, stop=0.5, num=5)
     approximators = [
         HMatApproximatorWrapper(),
@@ -68,7 +70,7 @@ def benchmark_approximate_weight_matrices(results_filepath="weight_matrices_appr
         SSSApproximatorWrapper(num_states_steps=3),
     ]
 
-    required_indices = np.arange(1000)
+    required_indices = get_required_indices(path_to_label_file=path_to_labelfile)
     model_classes = [
         GoogleNet,
         InceptionV3,
@@ -114,4 +116,4 @@ def benchmark_approximate_weight_matrices(results_filepath="weight_matrices_appr
 
 if __name__ == "__main__":
     #benchmark_approximate_test_matrices()
-    benchmark_approximate_weight_matrices()
+    benchmark_approximate_weight_matrices(path_to_labelfile=get_all_classes_filepath())
