@@ -27,6 +27,7 @@ def get_label_file_lines(path_to_label_file: str):
         return label_lines
 
 def get_required_indices(path_to_label_file: str):
+    label_lines = get_label_file_lines(path_to_label_file=path_to_label_file)
     # NOTE The correct mapping from network output index to class is given by: https://gist.github.com/yrevar/942d3a0ac09ec9e5eb3a
     required_indices = []
     for label_line in label_lines:
