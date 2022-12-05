@@ -26,8 +26,10 @@ class HMatLayer(StructuredLayer):
     def forward(self, U):
         # NOTE: This is a very inefficient implementation - it does not take advantage of the low rank matrices!
         dense_matrix = self.hmatrix.to_dense()
-        res = torch.matmul(dense_matrix, U.T)
-        return res.T
+        res = torch.matmul(dense_matrix, U.T).T
+        if self.use_bias:
+            res += self.bias
+        return res
     
     def get_nb_parameters(self) -> int:
         return self.hmatrix.get_nb_params()
