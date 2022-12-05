@@ -79,7 +79,8 @@ def benchmark_approximate_weight_matrices(path_to_labelfile: str,results_filepat
     ]
 
     model_names = [model_class.__name__ for model_class in model_classes]
-    weight_matrices = [model_class(output_indices=required_indices, use_gpu=False).get_optimization_matrix().detach().numpy() for model_class in model_classes]
+    # NOTE: Since in our layers, the matrix-vector multiplication is transposed compared to the VisionModels, we need to transpose the weight matrix here
+    weight_matrices = [model_class(output_indices=required_indices, use_gpu=False).get_optimization_matrix().detach().numpy().T for model_class in model_classes]
 
     result = dict()
     
