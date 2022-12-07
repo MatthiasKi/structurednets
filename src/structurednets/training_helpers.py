@@ -56,11 +56,29 @@ def train_with_decreasing_lr(model: torch.nn.Module, X_train: np.ndarray, y_trai
     lr = 1e-1
 
     trained_model = model
-    for _ in range(4):
+    start_training_losses = []
+    start_training_accuracies = []
+    start_val_losses = []
+    start_val_accuracies = []
+    train_loss_histories = []
+    train_accuracy_histories = []
+    val_loss_histories = []
+    val_accuracy_histories = []
+    for _ in range(5):
         trained_model, start_train_loss, start_train_accuracy, start_val_loss, start_val_accuracy, train_loss_history, train_accuracy_history, val_loss_history, val_accuracy_history = train(model=model, X_train=X_train, y_train=y_train, X_val=X_val, y_val=y_val, patience=patience, batch_size=batch_size, verbose=verbose, lr=lr, restore_best_model=True, loss_function_class=loss_function_class, min_patience_improvement=min_patience_improvement, optimizer_class=optimizer_class)
+        
+        start_training_losses.append(start_train_loss)
+        start_training_accuracies.append(start_train_accuracy)
+        start_val_losses.append(start_val_loss)
+        start_val_accuracies.append(start_val_accuracy)
+        train_loss_histories.append(train_loss_history)
+        train_accuracy_histories.append(train_accuracy_history)
+        val_loss_histories.append(val_loss_history)
+        val_accuracy_histories.append(val_accuracy_history)
+        
         lr *= 1e-1
 
-    return trained_model, start_train_loss, start_train_accuracy, start_val_loss, start_val_accuracy, train_loss_history, train_accuracy_history, val_loss_history, val_accuracy_history
+    return trained_model, start_training_losses, start_training_accuracies, start_val_losses, start_val_accuracies, train_loss_histories, train_accuracy_histories, val_loss_histories, val_accuracy_histories
 
 def train(model: torch.nn.Module, X_train: np.ndarray, y_train: np.ndarray, X_val=None, y_val=None, patience=10, batch_size=1000, verbose=False, lr=1e-6, restore_best_model=True, loss_function_class=torch.nn.CrossEntropyLoss, min_patience_improvement=1e-10, optimizer_class=torch.optim.Adam):
     if X_val is None or y_val is None:
