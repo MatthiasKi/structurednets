@@ -20,8 +20,8 @@ def benchmark_finetune_weight_matrices(
     path_to_labelfile: str,
     results_filepath="weight_matrix_finetuning_result.p",
     pretrained_dicts_path="weight_matrices_approximation_result.p",
-    patience=10,
-    batch_size=1000,
+    patience=5,
+    batch_size=10000,
     min_patience_improvement=1e-6,
     loss_function_class=torch.nn.CrossEntropyLoss,
 ):
