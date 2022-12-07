@@ -42,7 +42,7 @@ def benchmark_finetune_weight_matrices(
 
         model_name = model_class.__name__
         model = model_class(output_indices=required_indices, use_gpu=False)
-        weight_matrix = model.get_optimization_matrix().detach().numpy()
+        weight_matrix = model.get_optimization_matrix().detach().numpy().T
         input_dim = weight_matrix.shape[1]
         output_dim = weight_matrix.shape[0]
         nb_params_share = 0.2
@@ -86,8 +86,8 @@ def benchmark_finetune_weight_matrices(
                 input_dim=input_dim,
                 output_dim=output_dim,
                 nb_params_share=nb_params_share,
-                initial_system_approx=weight_matrix_data[nb_params_share]["SSSApproximatorWrapper"][model_name]["res_dict"]["system_approx"]
-
+                initial_system_approx=weight_matrix_data[nb_params_share]["SSSApproximatorWrapper"][model_name]["res_dict"]["system_approx"],
+                nb_states=weight_matrix_data[nb_params_share]["SSSApproximatorWrapper"][model_name]["res_dict"]["nb_states"]
             )
         ]
         
@@ -113,10 +113,14 @@ def benchmark_finetune_weight_matrices(
 if __name__ == "__main__":
     train_features_basepath = "path/to/train_features/"
     val_features_basepath = "path/to/val_features/"
-    path_to_labelfile = get_animal_classes_filepath()
+    pretrained_dicts_path = "weight_matrices_approximation_result.p"
+    results_filepath = "weight_matrix_finetuning_result.p"
+    path_to_labelfile = get_all_classes_filepath()
 
     benchmark_finetune_weight_matrices(
         train_features_basepath=train_features_basepath,
         val_features_basepath=val_features_basepath,
         path_to_labelfile=path_to_labelfile,
+        pretrained_dicts_path=pretrained_dicts_path,
+        results_filepath=results_filepath,
     )
