@@ -177,8 +177,8 @@ if __name__ == "__main__":
     
     # output_folder_path = "/path/to/validation_features/"
     # validation_folder_path = "/path/to/Imagenet/val/"
-    # model_class = AlexNet
-    # label_filepath = get_animal_classes_filepath()
+    # model_class = Resnet18
+    # label_filepath = get_all_classes_filepath()
 
     # extract_validation_features(
     #     output_folder_path=output_folder_path,
