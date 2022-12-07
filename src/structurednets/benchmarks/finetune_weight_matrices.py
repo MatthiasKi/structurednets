@@ -21,7 +21,7 @@ def benchmark_finetune_weight_matrices(
     results_filepath="weight_matrix_finetuning_result.p",
     pretrained_dicts_path="weight_matrices_approximation_result.p",
     patience=5,
-    batch_size=10000,
+    batch_size=1e9,
     min_patience_improvement=1e-6,
     loss_function_class=torch.nn.CrossEntropyLoss,
 ):
@@ -108,7 +108,7 @@ def benchmark_finetune_weight_matrices(
             result[approximator_name]["val_loss_histories"] = val_loss_histories
             result[approximator_name]["val_accuracy_histories"] = val_accuracy_histories
 
-        pickle.dump(result, open(results_filepath, "wb"))
+            pickle.dump(result, open(results_filepath, "wb"))
 
 if __name__ == "__main__":
     train_features_basepath = "path/to/train_features/"
