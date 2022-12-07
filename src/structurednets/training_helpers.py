@@ -19,8 +19,8 @@ def get_train_data(features_path: str):
     return X_train, X_val, y_train, y_val
 
 def get_batch(X: np.ndarray, y: np.ndarray, batch_size: int, batch_i: int):
-    X_batch = X[batch_i*batch_size:min((batch_i+1)*batch_size, X.shape[0])]
-    y_batch = y[batch_i*batch_size:min((batch_i+1)*batch_size, y.shape[0])]
+    X_batch = X[int(batch_i*batch_size):min(int((batch_i+1)*batch_size), X.shape[0])]
+    y_batch = y[int(batch_i*batch_size):min(int((batch_i+1)*batch_size), y.shape[0])]
     X_batch_t, y_batch_t = map(torch.tensor, (X_batch, y_batch))
     return X_batch_t, y_batch_t
 
