@@ -48,15 +48,12 @@ def get_loss_and_accuracy_for_model(model: torch.nn.Module, X_t: torch.tensor, y
         accuracy = get_accuracy(y_t, y_pred)
     return loss, accuracy
 
-def train_with_decreasing_lr(model: torch.nn.Module, X_train: np.ndarray, y_train: np.ndarray, X_val=None, y_val=None, patience=10, batch_size=1000, verbose=False, loss_function_class=torch.nn.CrossEntropyLoss, min_patience_improvement=1e-10, optimizer_class=torch.optim.SGD, finetune_mode=False):
+def train_with_decreasing_lr(model: torch.nn.Module, X_train: np.ndarray, y_train: np.ndarray, X_val=None, y_val=None, patience=10, batch_size=1000, verbose=False, loss_function_class=torch.nn.CrossEntropyLoss, min_patience_improvement=1e-10, optimizer_class=torch.optim.SGD):
     if X_val is None or y_val is None:
         X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2)
 
     # NOTE: We don't use an automatic way for scheduling the learning rate (such as for example torch.optim.ReduceLROnPlateau, because then we can restore the best model between all optimization steps)
-    if finetune_mode:
-        lr = 1e-3
-    else:
-        lr = 1e-1
+    lr = 1e-1
 
     trained_model = model
     for _ in range(4):

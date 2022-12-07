@@ -94,7 +94,7 @@ def benchmark_finetune_weight_matrices(
         for approximator_name, layer in zip(approximator_names, layers):
             print("Now checking " + approximator_name)
             test_loss_before_training, test_accuracy_before_training = get_loss_and_accuracy_for_model(model=layer, X_t=X_test_t, y_t=y_test_t, loss_function_class=loss_function_class)
-            trained_layer, _, _, _, _, train_loss_history, train_accuracy_history, val_loss_history, val_accuracy_history = train_with_decreasing_lr(model=layer, X_train=X_train, y_train=y_train, X_val=None, y_val=None, patience=patience, batch_size=batch_size, verbose=False, loss_function_class=loss_function_class, min_patience_improvement=min_patience_improvement, optimizer_class=torch.optim.SGD, finetune_mode=True)
+            trained_layer, _, _, _, _, train_loss_history, train_accuracy_history, val_loss_history, val_accuracy_history = train_with_decreasing_lr(model=layer, X_train=X_train, y_train=y_train, X_val=None, y_val=None, patience=patience, batch_size=batch_size, verbose=False, loss_function_class=loss_function_class, min_patience_improvement=min_patience_improvement, optimizer_class=torch.optim.SGD)
             test_loss_after_training, test_accuracy_after_training = get_loss_and_accuracy_for_model(model=trained_layer, X_t=X_test_t, y_t=y_test_t, loss_function_class=loss_function_class)
 
             result[approximator_name] = dict()
