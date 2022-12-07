@@ -84,8 +84,8 @@ def train(model: torch.nn.Module, X_train: np.ndarray, y_train: np.ndarray, X_va
     val_loss_history = []
     val_accuracy_history = []
 
-    best_val_loss = 1e9
-    best_model = None
+    best_val_loss = start_val_loss
+    best_model = pickle.loads(pickle.dumps(model))
 
     continue_training = True
     epoch = 1
