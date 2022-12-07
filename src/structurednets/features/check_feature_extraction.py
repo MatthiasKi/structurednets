@@ -2,7 +2,7 @@ import pickle
 import numpy as np
 import torch
 
-from structurednets.asset_helpers import get_animal_classes_filepath, get_object_classes_filepath, load_features
+from structurednets.asset_helpers import get_animal_classes_filepath, get_object_classes_filepath, load_features, get_all_classes_filepath
 from structurednets.features.extract_features import get_required_indices
 from structurednets.models.visionmodel import VisionModel
 from structurednets.models.alexnet import AlexNet
@@ -40,6 +40,6 @@ def check_features(feature_filepath: str, model_class: VisionModel, label_filepa
 if __name__ == "__main__":
     feature_filepath = "/path/to/AlexNet_animal_features.p"
     model_class = AlexNet
-    label_filepath = get_animal_classes_filepath()
+    label_filepath = get_all_classes_filepath()
 
     check_features(feature_filepath=feature_filepath, model_class=model_class, label_filepath=label_filepath)
