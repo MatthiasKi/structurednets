@@ -6,6 +6,7 @@ from structurednets.layers.layer_helpers import get_nb_model_parameters, get_ran
 from structurednets.approximators.hmat_approximator import HMatApproximator
 from structurednets.layers.structured_layer import StructuredLayer
 from structurednets.training_helpers import train, train_with_decreasing_lr
+from structurednets.hmatrix.hmatrix_component import HMatrixComponent
 
 class HMatLayer(StructuredLayer):
     def __init__(self, input_dim: int, output_dim: int, nb_params_share: float, use_bias=True, initial_weight_matrix=None, initial_bias=None, eta=0.5, initial_hmatrix=None):
@@ -21,20 +22,47 @@ class HMatLayer(StructuredLayer):
             res_dict = hmat_approximator.approximate(optim_mat=initial_weight_matrix, nb_params_share=nb_params_share)
             self.hmatrix = res_dict["h_matrix"].clone()
 
-        self.hmatrix_components = nn.ModuleList(self.hmatrix.get_all_hmatrix_components())
+        nonempty_hmatrix_components = self.hmatrix.get_all_hmatrix_components()
+        nonempty_hmatrix_components = [component for component in nonempty_hmatrix_components if component.are_low_rank_components_set()]
+        self.hmatrix_components = nn.ModuleList(nonempty_hmatrix_components)
         
+    def add_component_to_res(self, component: HMatrixComponent):
+        self.res[component.row_range.start:component.row_range.stop,:] += torch.matmul(component.left_lr, torch.matmul(component.right_lr, self.U_T[component.col_range.start:component.col_range.stop,:]))
+
     def forward(self, U):
-        # NOTE: This is a very inefficient implementation - it does not take advantage of the low rank matrices!
-        dense_matrix = self.hmatrix.to_dense()
-        res = torch.matmul(dense_matrix, U.T).T
+        res = torch.zeros((self.output_dim, U.shape[0]))
+        U_T = U.T
+        # NOTE: This could still be improved by parallelizing the component multiplications.
+        # However, then we need a thread-safe combination of the results (and the trivial solution for this would consume a lot memory)
+        for component in self.hmatrix_components:
+            res[component.row_range.start:component.row_range.stop,:] += torch.matmul(component.left_lr, torch.matmul(component.right_lr, U_T[component.col_range.start:component.col_range.stop,:]))
+        res = res.T
+        
         if self.use_bias:
             res += self.bias
+        
         return res
     
     def get_nb_parameters(self) -> int:
         return self.hmatrix.get_nb_params()
 
 if __name__ == "__main__":
+    input_dim = 50
+    output_dim = 50
+    nb_params_share = 0.5
+
+    optim_mat = np.random.uniform(-1, 1, size=(output_dim, input_dim)).astype(np.float32)
+    random_input = np.random.uniform(-1, 1, size=(10, input_dim)).astype(np.float32)
+    random_input_torch = torch.tensor(random_input)
+
+    approximator = HMatApproximator()
+    res_dict = approximator.approximate(optim_mat=optim_mat, nb_params_share=nb_params_share)
+    approximator_pred = (res_dict["approx_mat_dense"] @ random_input.T).T
+    layer = HMatLayer(input_dim=input_dim, output_dim=output_dim, nb_params_share=nb_params_share, use_bias=False, initial_hmatrix=res_dict["h_matrix"])
+    layer_pred = layer.forward(random_input_torch).detach().numpy()
+
+    # ---
+
     input_dim = 20
     output_dim = 20
     nb_params_share = 0.5
