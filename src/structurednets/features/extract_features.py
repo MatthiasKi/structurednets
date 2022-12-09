@@ -15,6 +15,17 @@ from structurednets.models.mobilenetv2 import MobilenetV2
 from structurednets.models.resnet18 import Resnet18
 from structurednets.models.vgg16 import VGG16
 
+def get_class_map(labels_filepath: str) -> list:
+    with open(labels_filepath, "r") as classes:
+        raw_class_map = classes.readlines()
+    class_map = [int(line.split("\n")[0].split(" ")[-1]) for line in raw_class_map]
+    return class_map
+
+def get_inverse_class_map(labels_filepath: str) -> list:
+    class_map = get_class_map(labels_filepath=labels_filepath)
+    inverse_class_map = [class_map.index(map_entry) for map_entry in np.arange(len(class_map))]
+    return inverse_class_map
+
 def get_device(use_gpu=True):
     if use_gpu:
         return torch.device('cuda' if torch.cuda.is_available() else 'cpu')
