@@ -94,6 +94,12 @@ def train(model: torch.nn.Module, X_train: np.ndarray, y_train: np.ndarray, X_va
     start_train_loss, start_train_accuracy = get_loss_and_accuracy_for_model(model=model, X_t=X_train_t, y_t=y_train_t, loss_function_class=loss_function_class)
     start_val_loss, start_val_accuracy = get_loss_and_accuracy_for_model(model=model, X_t=X_val_t, y_t=y_val_t, loss_function_class=loss_function_class)
 
+    if verbose:
+        print("Start Train Loss: " + str(start_train_loss))
+        print("Start Val Loss: " + str(start_val_loss))
+        print("Start Train Accuracy: " + str(start_train_accuracy))
+        print("Start Val Accuracy: " + str(start_val_accuracy))
+
     train_loss_history = []
     train_accuracy_history = []
     val_loss_history = []
