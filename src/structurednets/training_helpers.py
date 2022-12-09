@@ -53,7 +53,7 @@ def train_with_decreasing_lr(model: torch.nn.Module, X_train: np.ndarray, y_trai
         X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2)
 
     # NOTE: We don't use an automatic way for scheduling the learning rate (such as for example torch.optim.ReduceLROnPlateau, because then we can restore the best model between all optimization steps)
-    lr = 1e-1
+    lr = 1
 
     trained_model = model
     start_training_losses = []
@@ -65,7 +65,7 @@ def train_with_decreasing_lr(model: torch.nn.Module, X_train: np.ndarray, y_trai
     val_loss_histories = []
     val_accuracy_histories = []
     for _ in range(5):
-        trained_model, start_train_loss, start_train_accuracy, start_val_loss, start_val_accuracy, train_loss_history, train_accuracy_history, val_loss_history, val_accuracy_history = train(model=model, X_train=X_train, y_train=y_train, X_val=X_val, y_val=y_val, patience=patience, batch_size=batch_size, verbose=verbose, lr=lr, restore_best_model=True, loss_function_class=loss_function_class, min_patience_improvement=min_patience_improvement, optimizer_class=optimizer_class)
+        trained_model, start_train_loss, start_train_accuracy, start_val_loss, start_val_accuracy, train_loss_history, train_accuracy_history, val_loss_history, val_accuracy_history = train(model=trained_model, X_train=X_train, y_train=y_train, X_val=X_val, y_val=y_val, patience=patience, batch_size=batch_size, verbose=verbose, lr=lr, restore_best_model=True, loss_function_class=loss_function_class, min_patience_improvement=min_patience_improvement, optimizer_class=optimizer_class)
         
         start_training_losses.append(start_train_loss)
         start_training_accuracies.append(start_train_accuracy)
@@ -95,6 +95,7 @@ def train(model: torch.nn.Module, X_train: np.ndarray, y_train: np.ndarray, X_va
     start_val_loss, start_val_accuracy = get_loss_and_accuracy_for_model(model=model, X_t=X_val_t, y_t=y_val_t, loss_function_class=loss_function_class)
 
     if verbose:
+        print("------ Training Start -------")
         print("Start Train Loss: " + str(start_train_loss))
         print("Start Val Loss: " + str(start_val_loss))
         print("Start Train Accuracy: " + str(start_train_accuracy))
@@ -136,13 +137,16 @@ def train(model: torch.nn.Module, X_train: np.ndarray, y_train: np.ndarray, X_va
             print("Val Acc: " + str(val_accuracy_history[-1]))
             print("Val Loss: " + str(val_loss_history[-1]))
 
-        if len(val_loss_history) > 2*patience \
+        if len(val_loss_history) > patience \
             and np.min(val_loss_history[-patience:]) >= np.min(val_loss_history[:-patience]) - min_patience_improvement:
             continue_training = False
 
         if val_loss_history[-1] < best_val_loss:
             best_val_loss = val_loss_history[-1]
             best_model = pickle.loads(pickle.dumps(model))
+
+            if verbose:
+                print("Updated the best model found - new best val loss is " + str(best_val_loss))
 
         epoch += 1
     
