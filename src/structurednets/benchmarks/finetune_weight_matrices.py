@@ -21,9 +21,9 @@ def benchmark_finetune_weight_matrices(
     path_to_labelfile: str,
     results_filepath="weight_matrix_finetuning_result.p",
     pretrained_dicts_path="weight_matrices_approximation_result.p",
-    patience=3,
+    patience=2,
     batch_size=1e9,
-    min_patience_improvement=1e-6,
+    min_patience_improvement=1e-4,
     loss_function_class=torch.nn.CrossEntropyLoss,
 ):
     weight_matrix_data = pickle.load(open(pretrained_dicts_path, "rb"))
@@ -66,37 +66,37 @@ def benchmark_finetune_weight_matrices(
         X_test_t, y_test_t = get_full_batch(X=X_test, y=y_test)
 
         approximator_names = [
-            #'HMatApproximatorWrapper', 
+            'HMatApproximatorWrapper', 
             'LRApproximator',
-            # 'PSMApproximatorWrapper', 
-            # 'SSSApproximatorWrapper'
+            'PSMApproximatorWrapper', 
+            'SSSApproximatorWrapper'
         ]
         layers = [
-            # HMatLayer(
-            #     input_dim=input_dim,
-            #     output_dim=output_dim,
-            #     nb_params_share=nb_params_share,
-            #     initial_hmatrix=weight_matrix_data[nb_params_share]["HMatApproximatorWrapper"][model_name]["res_dict"]["h_matrix"]
-            # ),
+            HMatLayer(
+                input_dim=input_dim,
+                output_dim=output_dim,
+                nb_params_share=nb_params_share,
+                initial_hmatrix=weight_matrix_data[nb_params_share]["HMatApproximatorWrapper"][model_name]["res_dict"]["h_matrix"]
+            ),
             LRLayer(
                 input_dim=input_dim,
                 output_dim=output_dim,
                 nb_params_share=nb_params_share,
                 initial_lr_components=[weight_matrix_data[nb_params_share]["LRApproximator"][model_name]["res_dict"]["left_mat"], weight_matrix_data[0.2]["LRApproximator"][model_name]["res_dict"]["right_mat"]]
             ),
-            # PSMLayer(
-            #     input_dim=input_dim,
-            #     output_dim=output_dim,
-            #     nb_params_share=nb_params_share,
-            #     sparse_matrices=weight_matrix_data[nb_params_share]["PSMApproximatorWrapper"][model_name]["res_dict"]["faust_approximation"]
-            # ),
-            # SSSLayer(
-            #     input_dim=input_dim,
-            #     output_dim=output_dim,
-            #     nb_params_share=nb_params_share,
-            #     initial_system_approx=weight_matrix_data[nb_params_share]["SSSApproximatorWrapper"][model_name]["res_dict"]["system_approx"],
-            #     nb_states=weight_matrix_data[nb_params_share]["SSSApproximatorWrapper"][model_name]["res_dict"]["nb_states"]
-            # )
+            PSMLayer(
+                input_dim=input_dim,
+                output_dim=output_dim,
+                nb_params_share=nb_params_share,
+                sparse_matrices=weight_matrix_data[nb_params_share]["PSMApproximatorWrapper"][model_name]["res_dict"]["faust_approximation"]
+            ),
+            SSSLayer(
+                input_dim=input_dim,
+                output_dim=output_dim,
+                nb_params_share=nb_params_share,
+                initial_system_approx=weight_matrix_data[nb_params_share]["SSSApproximatorWrapper"][model_name]["res_dict"]["system_approx"],
+                nb_states=weight_matrix_data[nb_params_share]["SSSApproximatorWrapper"][model_name]["res_dict"]["nb_states"]
+            )
         ]
         
         for approximator_name, layer in zip(approximator_names, layers):
@@ -121,10 +121,10 @@ def benchmark_finetune_weight_matrices(
             pickle.dump(result, open(results_filepath, "wb"))
 
 if __name__ == "__main__":
-    train_features_basepath = "/home/ga76sih/lrz-nashome/Imagenet/features/" # "path/to/train_features/"
-    val_features_basepath = "/home/ga76sih/lrz-nashome/Imagenet/validation_features/" # "path/to/val_features/"
-    pretrained_dicts_path = "/home/ga76sih/lrz-nashome/structuresurvey/with_hedlr_3/weight_matrices_approximation_result.p" # "weight_matrices_approximation_result.p"
-    results_filepath = "/home/ga76sih/lrz-nashome/structuresurvey/with_hedlr_3/weight_matrix_finetuning_result_fred01_lr.p" # weight_matrix_finetuning_result.p
+    train_features_basepath = "path/to/train_features/"
+    val_features_basepath = "path/to/val_features/"
+    pretrained_dicts_path = "weight_matrices_approximation_result.p"
+    results_filepath = "weight_matrix_finetuning_result.p"
     path_to_labelfile = get_all_classes_filepath()
 
     benchmark_finetune_weight_matrices(
