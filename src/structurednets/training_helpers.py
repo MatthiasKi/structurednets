@@ -3,6 +3,7 @@ import pickle
 import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.utils import shuffle
+import math
 
 from structurednets.asset_helpers import load_features
 
@@ -138,7 +139,8 @@ def train(model: torch.nn.Module, X_train: np.ndarray, y_train: np.ndarray, X_va
             print("Val Loss: " + str(val_loss_history[-1]))
 
         if len(val_loss_history) > patience \
-            and np.min(val_loss_history[-patience:]) >= np.min(val_loss_history[:-patience]) - min_patience_improvement:
+            and (np.min(val_loss_history[-patience:]) >= np.min(val_loss_history[:-patience]) - min_patience_improvement
+                or math.isnan(val_loss_history[-1])):
             continue_training = False
 
         if val_loss_history[-1] < best_val_loss:
