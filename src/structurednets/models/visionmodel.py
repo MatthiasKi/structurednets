@@ -2,6 +2,8 @@ import torch
 import numpy as np
 import abc
 
+from structurednets.features.extract_features import get_device
+
 def get_nb_parameters_in_model(model: torch.nn, count_gradientless_parameters=True) -> int:
     nb_parameters = 0
     for name, param in model.named_parameters():
@@ -13,11 +15,7 @@ class VisionModel:
     __metaclass__ = abc.ABCMeta
 
     def __init__(self, output_indices: list, use_gpu=True):
-        if use_gpu:
-            self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')        
-        else:
-            self.device = 'cpu'
-            
+        self.device = get_device(use_gpu=use_gpu)   
         self.model.to(self.device)
         self.feature_model.to(self.device)
         self.output_indices = np.array(output_indices)
