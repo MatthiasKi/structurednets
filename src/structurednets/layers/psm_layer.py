@@ -33,10 +33,25 @@ class PSMLayer(StructuredLayer):
         res.requires_grad_(True)
         return nn.Parameter(res)
 
-    def forward(self, U):
+    def forward_sparse(self, U):
         y_pred = torch.sparse.mm(self.sparse_matrices[-1], U.T)
         for sparse_mat in self.sparse_matrices[:-1]:
             y_pred = torch.sparse.mm(sparse_mat, y_pred)
+        y_pred = y_pred.T
+        
+        if self.use_bias:
+            y_pred += self.bias
+        
+        return y_pred
+
+    def forward(self, U):
+        # NOTE: The current implementation of the torch.sparse.mm function does not support parallelization. 
+        # Therefore, depending on the computing architecture, it makes more sense to use dense matrices for computing the matrix-vector products.
+        # The sparse multiplication version is implemented in the forward_sparse() function - we use the non sparse version as standard here. 
+        dense_weight_matrices = [sparse_mat.to_dense() for sparse_mat in self.sparse_matrices]
+        y_pred = torch.mm(dense_weight_matrices[-1], U.T)
+        for dense_matrix in dense_weight_matrices[:-1]:
+            y_pred = torch.mm(dense_matrix, y_pred)
         y_pred = y_pred.T
         
         if self.use_bias:
