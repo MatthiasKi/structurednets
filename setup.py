@@ -32,5 +32,6 @@ setuptools.setup(
     	"scikit-learn",
     	"tvsclib @ git+https://github.com/MatthiasKi/tvsclib",
 	    "matplotlib",
+        "importlib_resources"
     ],
 )
