@@ -2,7 +2,11 @@ import torch
 import numpy as np
 import abc
 
-from structurednets.features.extract_features import get_device
+def get_device(use_gpu=True):
+    if use_gpu:
+        return torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    else:
+        return 'cpu'
 
 def get_nb_parameters_in_model(model: torch.nn, count_gradientless_parameters=True) -> int:
     nb_parameters = 0

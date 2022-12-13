@@ -6,6 +6,7 @@ from sklearn.utils import shuffle
 import math
 
 from structurednets.asset_helpers import load_features
+from structurednets.models.visionmodel import get_device
 
 def get_accuracy(y_true: torch.tensor, y_pred: torch.tensor):
     return (torch.sum(y_pred.argmax(axis=1) == y_true) / len(y_true)).cpu().detach().numpy()
@@ -19,14 +20,19 @@ def get_train_data(features_path: str):
     X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=42, shuffle=True)
     return X_train, X_val, y_train, y_val
 
-def get_batch(X: np.ndarray, y: np.ndarray, batch_size: int, batch_i: int):
+def get_batch(X: np.ndarray, y: np.ndarray, batch_size: int, batch_i: int, use_gpu=False):
     X_batch = X[int(batch_i*batch_size):min(int((batch_i+1)*batch_size), X.shape[0])]
     y_batch = y[int(batch_i*batch_size):min(int((batch_i+1)*batch_size), y.shape[0])]
     X_batch_t, y_batch_t = map(torch.tensor, (X_batch, y_batch))
+
+    device = get_device(use_gpu=use_gpu)
+    X_batch_t = X_batch_t.to(device)
+    y_batch_t = y_batch_t.to(device)
+
     return X_batch_t, y_batch_t
 
-def get_full_batch(X: np.ndarray, y: np.ndarray):
-    return get_batch(X=X, y=y, batch_size=X.shape[0], batch_i=0)
+def get_full_batch(X: np.ndarray, y: np.ndarray, use_gpu=False):
+    return get_batch(X=X, y=y, batch_size=X.shape[0], batch_i=0, use_gpu=use_gpu)
 
 def transform_feature_dtypes(X_train: np.ndarray, X_val: np.ndarray, y_train: np.ndarray, y_val: np.ndarray):
     return X_train.astype(np.float32), X_val.astype(np.float32), y_train.astype(np.int64), y_val.astype(np.int64)
@@ -49,7 +55,7 @@ def get_loss_and_accuracy_for_model(model: torch.nn.Module, X_t: torch.tensor, y
         accuracy = get_accuracy(y_t, y_pred)
     return loss, accuracy
 
-def train_with_decreasing_lr(model: torch.nn.Module, X_train: np.ndarray, y_train: np.ndarray, X_val=None, y_val=None, patience=10, batch_size=1000, verbose=False, loss_function_class=torch.nn.CrossEntropyLoss, min_patience_improvement=1e-10, optimizer_class=torch.optim.SGD):
+def train_with_decreasing_lr(model: torch.nn.Module, X_train: np.ndarray, y_train: np.ndarray, X_val=None, y_val=None, patience=10, batch_size=1000, verbose=False, loss_function_class=torch.nn.CrossEntropyLoss, min_patience_improvement=1e-10, optimizer_class=torch.optim.SGD, use_gpu=False):
     if X_val is None or y_val is None:
         X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2)
 
@@ -66,7 +72,7 @@ def train_with_decreasing_lr(model: torch.nn.Module, X_train: np.ndarray, y_trai
     val_loss_histories = []
     val_accuracy_histories = []
     for _ in range(5):
-        trained_model, start_train_loss, start_train_accuracy, start_val_loss, start_val_accuracy, train_loss_history, train_accuracy_history, val_loss_history, val_accuracy_history = train(model=trained_model, X_train=X_train, y_train=y_train, X_val=X_val, y_val=y_val, patience=patience, batch_size=batch_size, verbose=verbose, lr=lr, restore_best_model=True, loss_function_class=loss_function_class, min_patience_improvement=min_patience_improvement, optimizer_class=optimizer_class)
+        trained_model, start_train_loss, start_train_accuracy, start_val_loss, start_val_accuracy, train_loss_history, train_accuracy_history, val_loss_history, val_accuracy_history = train(model=trained_model, X_train=X_train, y_train=y_train, X_val=X_val, y_val=y_val, patience=patience, batch_size=batch_size, verbose=verbose, lr=lr, restore_best_model=True, loss_function_class=loss_function_class, min_patience_improvement=min_patience_improvement, optimizer_class=optimizer_class, use_gpu=use_gpu)
         
         start_training_losses.append(start_train_loss)
         start_training_accuracies.append(start_train_accuracy)
@@ -81,11 +87,11 @@ def train_with_decreasing_lr(model: torch.nn.Module, X_train: np.ndarray, y_trai
 
     return trained_model, start_training_losses, start_training_accuracies, start_val_losses, start_val_accuracies, train_loss_histories, train_accuracy_histories, val_loss_histories, val_accuracy_histories
 
-def train(model: torch.nn.Module, X_train: np.ndarray, y_train: np.ndarray, X_val=None, y_val=None, patience=10, batch_size=1000, verbose=False, lr=1e-6, restore_best_model=True, loss_function_class=torch.nn.CrossEntropyLoss, min_patience_improvement=1e-10, optimizer_class=torch.optim.Adam):
+def train(model: torch.nn.Module, X_train: np.ndarray, y_train: np.ndarray, X_val=None, y_val=None, patience=10, batch_size=1000, verbose=False, lr=1e-6, restore_best_model=True, loss_function_class=torch.nn.CrossEntropyLoss, min_patience_improvement=1e-10, optimizer_class=torch.optim.Adam, use_gpu=False):
     if X_val is None or y_val is None:
         X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2)
-    X_train_t, y_train_t = get_full_batch(X_train, y_train)
-    X_val_t, y_val_t = get_full_batch(X_val, y_val)
+    X_train_t, y_train_t = get_full_batch(X_train, y_train, use_gpu=use_gpu)
+    X_val_t, y_val_t = get_full_batch(X_val, y_val, use_gpu=use_gpu)
 
     optimizer = optimizer_class(model.parameters(), lr=lr)
     
@@ -116,7 +122,7 @@ def train(model: torch.nn.Module, X_train: np.ndarray, y_train: np.ndarray, X_va
         X_train_shuffled, y_train_shuffled = shuffle(X_train, y_train)
 
         for batch_i in range(nb_batches_per_epoch):
-            X_batch_t, y_batch_t = get_batch(X_train_shuffled, y_train_shuffled, batch_size=batch_size, batch_i=batch_i)
+            X_batch_t, y_batch_t = get_batch(X_train_shuffled, y_train_shuffled, batch_size=batch_size, batch_i=batch_i, use_gpu=use_gpu)
             outputs_train = model(X_batch_t)
             loss_train = loss_function(outputs_train, target=y_batch_t)
             optimizer.zero_grad()

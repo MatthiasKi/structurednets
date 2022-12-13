@@ -7,7 +7,7 @@ import torchvision.transforms as transforms
 from PIL import Image
 
 from structurednets.asset_helpers import get_animal_classes_filepath, get_object_classes_filepath, get_label_name_from_path, assemble_features_output_filename, get_output_idx_for_validation_imagename, get_all_classes_filepath
-from structurednets.models.visionmodel import VisionModel
+from structurednets.models.visionmodel import VisionModel, get_device
 from structurednets.models.alexnet import AlexNet
 from structurednets.models.googlenet import GoogleNet
 from structurednets.models.inceptionv3 import InceptionV3
@@ -25,12 +25,6 @@ def get_inverse_class_map(labels_filepath: str) -> list:
     class_map = get_class_map(labels_filepath=labels_filepath)
     inverse_class_map = [class_map.index(map_entry) for map_entry in np.arange(len(class_map))]
     return inverse_class_map
-
-def get_device(use_gpu=True):
-    if use_gpu:
-        return torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    else:
-        return 'cpu'
 
 def get_label_file_lines(path_to_label_file: str):
     with open(path_to_label_file, "r") as f:

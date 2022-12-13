@@ -10,6 +10,7 @@ from tvsclib.system_identification_svd import SystemIdentificationSVD
 from structurednets.layers.layer_helpers import get_random_glorot_uniform_matrix, get_nb_model_parameters
 from structurednets.training_helpers import train_with_decreasing_lr
 from structurednets.layers.structured_layer import StructuredLayer
+from structurednets.models.visionmodel import get_device
 
 def get_nb_parameters(optim_mat_shape: tuple, statespace_dim: int, nb_states: int) -> int:
     dims_in, dims_out = standard_dims_in_dims_out_computation(input_size=optim_mat_shape[1], output_size=optim_mat_shape[0], nb_states=nb_states)
@@ -32,7 +33,7 @@ def has_less_parameters_than_allowed(optim_mat: np.ndarray, nb_params_share: flo
     return get_nb_parameters(optim_mat_shape=optim_mat.shape, statespace_dim=state_space_dim, nb_states=nb_states) < int(nb_params_share * optim_mat.size)
     
 class SSSLayer(StructuredLayer):
-    def __init__(self, input_dim: int, output_dim: int, nb_params_share: float, use_bias=True, initial_weight_matrix=None, initial_bias=None, nb_states=None, initial_system_approx=None):
+    def __init__(self, input_dim: int, output_dim: int, nb_params_share: float, use_bias=True, initial_weight_matrix=None, initial_bias=None, nb_states=None, initial_system_approx=None, use_gpu=False):
         super(SSSLayer, self).__init__(input_dim=input_dim, output_dim=output_dim, nb_params_share=nb_params_share, use_bias=use_bias, initial_weight_matrix=initial_weight_matrix, initial_bias=initial_bias)
 
         if nb_states is None:
@@ -48,6 +49,7 @@ class SSSLayer(StructuredLayer):
         self.nb_states = nb_states
 
         self.init_state_matrices(nb_params_share=nb_params_share, initial_weight_matrix=initial_weight_matrix, initial_system_approx=initial_system_approx)
+        self.use_gpu = use_gpu
 
     def init_state_matrices(self, nb_params_share: float, initial_weight_matrix=None, initial_system_approx=None):
         if initial_weight_matrix is None:
@@ -101,6 +103,11 @@ class SSSLayer(StructuredLayer):
             causal_state = torch.zeros((0, U.shape[0]))
             anticausal_state = torch.zeros((0, U.shape[0]))
 
+            device = get_device(use_gpu=self.use_gpu)
+            y_pred = y_pred.to(device)
+            causal_state = causal_state.to(device)
+            anticausal_state = anticausal_state.to(device)
+
             for causal_state_i in range(self.nb_states):
                 causal_state_input_index_range = self.get_input_index_range_according_to_state(causal_state_i)
                 causal_state_output_index_range = self.get_output_index_range_according_to_state(causal_state_i)
@@ -142,20 +149,25 @@ if __name__ == "__main__":
     input_dim = 31
     output_dim = 20
     nb_params_share = 0.5
+    use_gpu = True
+
+    device = get_device(use_gpu=use_gpu)
 
     nb_training_samples = 1000
     train_input = np.random.uniform(-1, 1, size=(nb_training_samples, input_dim)).astype(np.float32)
     train_output = np.ones((nb_training_samples, output_dim), dtype=np.float32)
 
-    layer = SSSLayer(input_dim=input_dim, output_dim=output_dim, nb_params_share=nb_params_share)
+    layer = SSSLayer(input_dim=input_dim, output_dim=output_dim, nb_params_share=nb_params_share, use_gpu=use_gpu)
+    layer = layer.to(device)
     trained_layer, start_train_loss, start_train_accuracy, start_val_loss, start_val_accuracy, train_loss_history, train_accuracy_history, val_loss_history, val_accuracy_history = train_with_decreasing_lr(
         model=layer, X_train=train_input, y_train=train_output,
         patience=1, batch_size=nb_training_samples, verbose=False,
         loss_function_class=torch.nn.MSELoss,
-        min_patience_improvement=1e5 # This makes the model being trained for only few epochs
+        min_patience_improvement=1e5, # This makes the model being trained for only few epochs,
+        use_gpu=use_gpu
     )
 
-    train_input_torch = torch.tensor(train_input).float()
+    train_input_torch = torch.tensor(train_input).float().to(device)
     pred = trained_layer.forward(train_input_torch).detach().numpy()
 
     max_error = np.max(np.abs(pred - train_output))

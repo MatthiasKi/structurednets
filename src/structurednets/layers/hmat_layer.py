@@ -7,9 +7,10 @@ from structurednets.approximators.hmat_approximator import HMatApproximator
 from structurednets.layers.structured_layer import StructuredLayer
 from structurednets.training_helpers import train, train_with_decreasing_lr
 from structurednets.hmatrix.hmatrix_component import HMatrixComponent
+from structurednets.models.visionmodel import get_device
 
 class HMatLayer(StructuredLayer):
-    def __init__(self, input_dim: int, output_dim: int, nb_params_share: float, use_bias=True, initial_weight_matrix=None, initial_bias=None, eta=0.5, initial_hmatrix=None):
+    def __init__(self, input_dim: int, output_dim: int, nb_params_share: float, use_bias=True, initial_weight_matrix=None, initial_bias=None, eta=0.5, initial_hmatrix=None, use_gpu=False):
         super(HMatLayer, self).__init__(input_dim=input_dim, output_dim=output_dim, nb_params_share=nb_params_share, use_bias=use_bias, initial_weight_matrix=initial_weight_matrix, initial_bias=initial_bias)
         assert initial_weight_matrix is None or initial_hmatrix is None, "You can either pass an initial hmatrix or an initial weight matrix to be used as starting point fo the HMatrixLayer"
 
@@ -25,12 +26,17 @@ class HMatLayer(StructuredLayer):
         nonempty_hmatrix_components = self.hmatrix.get_all_hmatrix_components()
         nonempty_hmatrix_components = [component for component in nonempty_hmatrix_components if component.are_low_rank_components_set()]
         self.hmatrix_components = nn.ModuleList(nonempty_hmatrix_components)
+        self.use_gpu = use_gpu
         
     def add_component_to_res(self, component: HMatrixComponent):
         self.res[component.row_range.start:component.row_range.stop,:] += torch.matmul(component.left_lr, torch.matmul(component.right_lr, self.U_T[component.col_range.start:component.col_range.stop,:]))
 
     def forward(self, U):
         res = torch.zeros((self.output_dim, U.shape[0]))
+
+        device = get_device(use_gpu=self.use_gpu)
+        res.to(device)
+
         U_T = U.T
         # NOTE: This could still be improved by parallelizing the component multiplications.
         # However, then we need a thread-safe combination of the results (and the trivial solution for this would consume a lot memory)
