@@ -72,8 +72,6 @@ def benchmark_finetune_weight_matrices(
         X_train, X_val, y_train, y_val = transform_feature_dtypes(X_train=X_train, X_val=X_val, y_train=y_train, y_val=y_val)
         X_test, _, y_test, _ = transform_feature_dtypes(X_train=X_test, X_val=X_test, y_train=y_test, y_val=y_test)
 
-        X_test_t, y_test_t = get_full_batch(X=X_test, y=y_test, use_gpu=use_gpu)
-
         approximator_names = [
             'HMatApproximatorWrapper', 
             'LRApproximator',
@@ -130,9 +128,9 @@ def benchmark_finetune_weight_matrices(
                 result[model_name][approximator_name]["val_accuracy_histories"] = previous_result[model_name][approximator_name]["val_accuracy_histories"]
             else:
                 print("Now checking " + approximator_name)
-                test_loss_before_training, test_accuracy_before_training = get_loss_and_accuracy_for_model(model=layer, X_t=X_test_t, y_t=y_test_t, loss_function_class=loss_function_class)
+                test_loss_before_training, test_accuracy_before_training = get_loss_and_accuracy_for_model(model=layer, X=X_test, y=y_test, loss_function_class=loss_function_class, use_gpu=use_gpu)
                 trained_layer, _, _, _, _, train_loss_histories, train_accuracy_histories, val_loss_histories, val_accuracy_histories = train_with_decreasing_lr(model=layer, X_train=X_train, y_train=y_train, X_val=None, y_val=None, patience=patience, batch_size=batch_size, verbose=True, loss_function_class=loss_function_class, min_patience_improvement=min_patience_improvement, optimizer_class=torch.optim.SGD, use_gpu=use_gpu)
-                test_loss_after_training, test_accuracy_after_training = get_loss_and_accuracy_for_model(model=trained_layer, X_t=X_test_t, y_t=y_test_t, loss_function_class=loss_function_class)
+                test_loss_after_training, test_accuracy_after_training = get_loss_and_accuracy_for_model(model=trained_layer, X=X_test, y=y_test, loss_function_class=loss_function_class, use_gpu=use_gpu)
 
                 result[model_name][approximator_name]["test_accuracy_before_training"] = test_accuracy_before_training
                 result[model_name][approximator_name]["test_loss_before_training"] = test_loss_before_training
@@ -145,7 +143,7 @@ def benchmark_finetune_weight_matrices(
                 result[model_name][approximator_name]["val_accuracy_histories"] = val_accuracy_histories
 
                 print("Trained for " + str(sum([len(l) for l in train_loss_histories])) + " steps")
-
+                
             pickle.dump(result, open(results_filepath, "wb"))
 
 if __name__ == "__main__":
@@ -153,8 +151,9 @@ if __name__ == "__main__":
     val_features_basepath = "path/to/val_features/"
     pretrained_dicts_path = "weight_matrices_approximation_result.p"
     results_filepath = "weight_matrix_finetuning_result.p"
-    use_gpu = False # NOTE that use_gpu=True is currently only supported for some layers
+    use_gpu = True # NOTE that use_gpu=True is currently only supported for some layers
     path_to_labelfile = get_all_classes_filepath()
+    batch_size = 260000
 
     benchmark_finetune_weight_matrices(
         train_features_basepath=train_features_basepath,
@@ -162,5 +161,6 @@ if __name__ == "__main__":
         path_to_labelfile=path_to_labelfile,
         pretrained_dicts_path=pretrained_dicts_path,
         results_filepath=results_filepath,
-        use_gpu=use_gpu
+        use_gpu=use_gpu,
+        batch_size=batch_size,
     )
