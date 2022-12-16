@@ -88,7 +88,7 @@ def train_with_decreasing_lr(model: torch.nn.Module, X_train: np.ndarray, y_trai
     train_accuracy_histories = []
     val_loss_histories = []
     val_accuracy_histories = []
-    for _ in range(5):
+    for _ in range(10):
         trained_model, start_train_loss, start_train_accuracy, start_val_loss, start_val_accuracy, train_loss_history, train_accuracy_history, val_loss_history, val_accuracy_history = train(model=trained_model, X_train=X_train, y_train=y_train, X_val=X_val, y_val=y_val, patience=patience, batch_size=batch_size, verbose=verbose, lr=lr, restore_best_model=True, loss_function_class=loss_function_class, min_patience_improvement=min_patience_improvement, optimizer_class=optimizer_class, use_gpu=use_gpu)
         
         start_training_losses.append(start_train_loss)
@@ -100,7 +100,7 @@ def train_with_decreasing_lr(model: torch.nn.Module, X_train: np.ndarray, y_trai
         val_loss_histories.append(val_loss_history)
         val_accuracy_histories.append(val_accuracy_history)
         
-        lr *= 1e-1
+        lr *= 0.5
 
     return trained_model, start_training_losses, start_training_accuracies, start_val_losses, start_val_accuracies, train_loss_histories, train_accuracy_histories, val_loss_histories, val_accuracy_histories
 
