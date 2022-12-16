@@ -33,9 +33,8 @@ class HMatLayer(StructuredLayer):
 
     def forward(self, U):
         res = torch.zeros((self.output_dim, U.shape[0]))
-
         device = get_device(use_gpu=self.use_gpu)
-        res.to(device)
+        res = res.to(device)
 
         U_T = U.T
         # NOTE: This could still be improved by parallelizing the component multiplications.
