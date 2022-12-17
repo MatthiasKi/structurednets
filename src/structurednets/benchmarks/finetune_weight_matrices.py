@@ -23,7 +23,7 @@ def benchmark_finetune_weight_matrices(
     pretrained_dicts_path="weight_matrices_approximation_result.p",
     patience=2,
     batch_size=1e9,
-    min_patience_improvement=1e-4,
+    min_patience_improvement=1e-2,
     loss_function_class=torch.nn.CrossEntropyLoss,
     use_gpu=False,
 ):
@@ -51,6 +51,8 @@ def benchmark_finetune_weight_matrices(
         model_name = model_class.__name__
         model = model_class(output_indices=required_indices, use_gpu=False)
         weight_matrix = model.get_optimization_matrix().detach().numpy().T
+        initial_bias = model.get_bias().detach().numpy()
+
         input_dim = weight_matrix.shape[1]
         output_dim = weight_matrix.shape[0]
         nb_params_share = 0.2
@@ -62,12 +64,6 @@ def benchmark_finetune_weight_matrices(
         X_train, X_val, y_train, y_val = get_train_data(train_features_path)
         # NOTE: We report the results on the original Imagenet validation dataset (which is not used during our training period). To avoid confusion, we name this dataset "test set" here. It is a test set for us - but not for the originally trained models. 
         X_test, y_test, _ = load_features(val_features_path)
-
-        # NOTE: We are here working on the outputs *before* they get class-adapted - hence we need to re-adjust the labels which have been extracted
-        inverse_class_map = get_inverse_class_map(labels_filepath=path_to_labelfile)
-        y_train = np.array([inverse_class_map[entry] for entry in y_train])
-        y_val = np.array([inverse_class_map[entry] for entry in y_val])
-        y_test = np.array([inverse_class_map[entry] for entry in y_test])
 
         X_train, X_val, y_train, y_val = transform_feature_dtypes(X_train=X_train, X_val=X_val, y_train=y_train, y_val=y_val)
         X_test, _, y_test, _ = transform_feature_dtypes(X_train=X_test, X_val=X_test, y_train=y_test, y_val=y_test)
@@ -83,19 +79,26 @@ def benchmark_finetune_weight_matrices(
                 input_dim=input_dim,
                 output_dim=output_dim,
                 nb_params_share=nb_params_share,
-                initial_hmatrix=weight_matrix_data[nb_params_share]["HMatApproximatorWrapper"][model_name]["res_dict"]["h_matrix"]
+                initial_hmatrix=weight_matrix_data[nb_params_share]["HMatApproximatorWrapper"][model_name]["res_dict"]["h_matrix"],
+                use_gpu=use_gpu,
+                use_bias=True,
+                initial_bias=initial_bias,
             ),
             LRLayer(
                 input_dim=input_dim,
                 output_dim=output_dim,
                 nb_params_share=nb_params_share,
-                initial_lr_components=[weight_matrix_data[nb_params_share]["LRApproximator"][model_name]["res_dict"]["left_mat"], weight_matrix_data[0.2]["LRApproximator"][model_name]["res_dict"]["right_mat"]]
+                initial_lr_components=[weight_matrix_data[nb_params_share]["LRApproximator"][model_name]["res_dict"]["left_mat"], weight_matrix_data[0.2]["LRApproximator"][model_name]["res_dict"]["right_mat"]],
+                use_bias=True,
+                initial_bias=initial_bias,
             ),
             PSMLayer(
                 input_dim=input_dim,
                 output_dim=output_dim,
                 nb_params_share=nb_params_share,
-                sparse_matrices=weight_matrix_data[nb_params_share]["PSMApproximatorWrapper"][model_name]["res_dict"]["faust_approximation"]
+                sparse_matrices=weight_matrix_data[nb_params_share]["PSMApproximatorWrapper"][model_name]["res_dict"]["faust_approximation"],
+                use_bias=True,
+                initial_bias=initial_bias,
             ),
             SSSLayer(
                 input_dim=input_dim,
@@ -103,7 +106,9 @@ def benchmark_finetune_weight_matrices(
                 nb_params_share=nb_params_share,
                 initial_system_approx=weight_matrix_data[nb_params_share]["SSSApproximatorWrapper"][model_name]["res_dict"]["system_approx"],
                 nb_states=weight_matrix_data[nb_params_share]["SSSApproximatorWrapper"][model_name]["res_dict"]["nb_states"],
-                use_gpu=use_gpu
+                use_gpu=use_gpu,
+                use_bias=True,
+                initial_bias=initial_bias,
             )
         ]
         
@@ -151,9 +156,9 @@ if __name__ == "__main__":
     val_features_basepath = "path/to/val_features/"
     pretrained_dicts_path = "weight_matrices_approximation_result.p"
     results_filepath = "weight_matrix_finetuning_result.p"
-    use_gpu = True # NOTE that use_gpu=True is currently only supported for some layers
+    use_gpu = True
     path_to_labelfile = get_all_classes_filepath()
-    batch_size = 260000
+    batch_size = 150000
 
     benchmark_finetune_weight_matrices(
         train_features_basepath=train_features_basepath,
