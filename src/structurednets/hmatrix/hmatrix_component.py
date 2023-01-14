@@ -112,7 +112,7 @@ class HMatrixComponent(nn.Module):
 
     def get_curr_local_error(self, optim_mat: np.ndarray) -> float:
         optim_mat_part = optim_mat[self.row_range.start:self.row_range.stop, self.col_range.start:self.col_range.stop]
-        return np.linalg.norm(optim_mat_part - self.to_dense_numpy(), ord="fro")
+        return np.square(np.linalg.norm(optim_mat_part - self.to_dense_numpy(), ord="fro"))
 
     def has_cached_error_reductions(self):
         return hasattr(self, "cached_error_reductions")
@@ -142,7 +142,7 @@ class HMatrixComponent(nn.Module):
             if cache_result:
                 self.add_cached_error_reduction(error_reduction=error_reduction)
 
-        return error_reduction
+        return error_reduction / self.get_nb_parameters_added_for_adding_a_singular_value()
 
     def get_nb_parameters_added_for_adding_a_singular_value(self) -> int:
         return self.left_full_component.shape[0] + self.right_full_component.shape[1]
